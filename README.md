@@ -540,3 +540,179 @@ These also help build LLM applications, but LangChain is currently the most popu
 LangChain helps us build AI apps powered by LLMs easily. It handles the messy engineering so you can focus on your idea. It provides tools, memory, chains, and integrations that make LLM apps production-ready.
 
 This is why LangChain is becoming a very important technology in the world of AI.
+
+
+# 📌 LangChain – Video 4 
+
+## 🔷 Why this video is important
+
+The speaker explains that before writing code in LangChain, we must first understand how the framework is organized and what components it provides. This video builds a roadmap for the upcoming tutorials.
+
+## 🔁 Quick Recap of Previous Video
+
+In the last video, we learned:
+
+* LangChain is an open-source framework that helps build LLM-powered apps.
+* It becomes difficult to create apps that:
+
+  * Read documents
+  * Split them into chunks
+  * Store embeddings
+  * Search relevant content
+  * Send it to an LLM
+  * Get and format the answer
+
+LangChain solves this by connecting all parts efficiently using minimal code.
+
+We also learned:
+
+* Chains help link components together like a pipeline.
+* LangChain is model-agnostic — meaning we can switch models like OpenAI, Gemini, Mistral, etc. without rewriting the whole code.
+* LangChain is used today for:
+
+  * Chatbots
+  * Knowledge assistants
+  * AI agents
+
+## 📦 LangChain Components
+
+LangChain has six major components:
+
+1. Models
+2. Prompts
+3. Chains
+4. Memory
+5. Indexes
+6. Agents
+
+If you understand these six, you understand most of LangChain.
+
+## 1️⃣ Models
+
+Models are the core interface that communicates with AI models (LLMs).
+
+### Why models are needed:
+
+Different companies give different APIs for communication.
+
+Without LangChain, you need different code for:
+
+* OpenAI’s GPT
+* Anthropic’s Claude
+* Google Gemini
+
+Each API behaves differently.
+
+LangChain standardizes this by giving a single interface that works for all models.
+Changing model provider requires just **1–2 lines of code**.
+
+### Types of Models
+
+* **Language Models** → text in, text out
+  *Example: ChatGPT replies to a question*
+
+* **Embedding Models** → text in, vector out
+  *Used for semantic search*
+
+## 2️⃣ Prompts
+
+Prompts are the input we give to LLMs.
+
+LLM output depends heavily on how we write prompts. Changing even one word can change the answer.
+
+### Types of prompts in LangChain:
+
+* **Dynamic prompts** — Fill values later using placeholders
+  *Example: "Summarize {topic} in a {tone}"*
+
+* **Role-based prompts** — Tell the model who it is
+  *Example: "You are an experienced doctor"*
+
+* **Few-shot prompts** — Provide examples first, then ask a question
+
+Prompt engineering is now a real job profile because LLMs are very sensitive to input wording.
+
+## 3️⃣ Chains
+
+Chains let you create pipelines.
+
+They automate the process where:
+
+* Output of one step becomes input to the next
+* You don’t manually pass values
+
+### Examples:
+
+* English text → Translate to Hindi → Summarize it → Return final result
+* **Parallel chains**: multiple models run at the same time
+* **Conditional chains**: different execution based on rules
+
+Chains remove repeated coding and handle flow automatically.
+
+## 4️⃣ Indexes
+
+Indexes allow your LLM to access external knowledge, such as:
+
+* PDFs
+* Websites
+* Company databases
+
+### Indexes are made of four parts:
+
+| Component       | Meaning                              |
+| --------------- | ------------------------------------ |
+| Document Loader | Load PDFs, pages, files              |
+| Text Splitter   | Break large text into chunks         |
+| Vector Store    | Store embeddings (special DB)        |
+| Retriever       | Find relevant chunks and return them |
+
+Indexes enable private and custom knowledge search — something ChatGPT cannot do alone.
+
+## 5️⃣ Memory
+
+LLMs are stateless, meaning they forget previous messages unless we send history again.
+
+Memory solves this by storing previous conversation context.
+
+### Types of memory:
+
+* **Conversation buffer** → stores full history
+* **Window memory** → stores recent messages
+* **Summary memory** → stores summarized history
+* **Custom memory** → stores special info like preferences
+
+Memory makes chatbots feel continuous and human-like.
+
+## 6️⃣ Agents
+
+Agents are advanced chatbots that can think and take actions.
+
+### Difference:
+
+| Chatbot    | Agent                  |
+| ---------- | ---------------------- |
+| Only talks | Talks + performs tasks |
+
+### Agents have:
+
+* **Reasoning ability** → Break tasks into steps
+* **Tools access** → They can call APIs, search the web, calculate, etc.
+
+#### Example:
+
+User: *Multiply today's temperature of Delhi by 3*
+
+Agent:
+
+* Gets weather from API
+* Uses calculator
+* Returns result
+
+This is why agents are considered the next big thing in AI.
+
+## 🎯 Conclusion
+
+* LangChain has six core components.
+* Understanding them gives a complete foundation.
+* Next videos will dive deeper into each component, starting with Models.
+* No code yet — this video builds conceptual understanding first.
