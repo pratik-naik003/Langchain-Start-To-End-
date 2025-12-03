@@ -79,16 +79,6 @@ To judge success, compare tech using 5 questions:
 
 **Conclusion:** GenAI follows the path of the **Internet**, not **Crypto**. It is here to stay.
 
-## ⏳ Why the Delay in GenAI Videos?
-
-Three reasons delayed the series:
-
-1. Doubt about whether GenAI was hype
-2. Lack of time commitment
-3. Rapid innovation made it hard to track updates
-
-He solved this by creating a structured mental model.
-
 ## 🧠 The Core Mental Model of GenAI
 
 Everything in GenAI revolves around **Foundation Models**.
@@ -193,3 +183,213 @@ GenAI is transforming industries and global economies. Learning it now gives you
 ## 💬 Summary in One Line
 
 **Generative AI is the future of creativity, automation, and intelligence — learn it now before it becomes a basic requirement.**
+
+
+# 📌 Generative AI – Video 2: LangChain Playlist Notes
+
+## 🎥 Introduction
+
+This video starts the **User Side** journey of the Generative AI curriculum.
+
+In the previous video, Nitesh explained that GenAI has two major parts:
+
+* **Builder Side** – Creating foundation models
+* **User Side** – Using these models to build applications
+
+The LangChain playlist belongs to the **User Side** of the curriculum.
+
+## 🔁 Recap of Previous Video
+
+Generative AI is divided into two tracks:
+
+### **Builder Side**
+
+Includes concepts like:
+
+* Transformers
+* Tokenization
+* Pre-training
+* Fine-tuning
+* Optimization
+* Deployment
+
+### **User Side**
+
+Focuses on:
+
+* Building LLM-based applications
+* Prompt Engineering
+* RAG (Retrieval Augmented Generation)
+* AI Agents
+* LLM Ops and more
+
+LangChain helps in building LLM-powered apps, so it is the first step in the user-side journey.
+
+## ❓ What is LangChain?
+
+LangChain is an open-source framework that makes it easy to build applications powered by Large Language Models (LLMs).
+
+Using LangChain, you can build:
+
+* Chatbots
+* Question-answering systems
+* RAG-based applications
+* Autonomous AI Agents
+* Many other GenAI-powered applications
+
+LangChain provides:
+
+* Ready-to-use components
+* End-to-end development tools
+* Integrations with multiple LLMs
+
+## ⭐ Why is LangChain Popular?
+
+### 1️⃣ Supports Almost Every LLM
+
+Works with both open-source and closed-source models:
+
+* OpenAI GPT models
+* Anthropic Claude
+* Google Gemini
+* Hugging Face models
+* Ollama etc.
+
+### 2️⃣ Simplifies LLM App Development
+
+* Removes complex boilerplate code
+* Provides **Chains** to combine multiple steps easily
+
+### 3️⃣ Easy Integrations
+
+Connects effortlessly with:
+
+* Databases
+* APIs
+* Data sources
+* Deployment services
+
+LangChain includes wrappers to integrate tools without writing everything manually.
+
+### 4️⃣ Free and Open Source
+
+* 100% free
+* Very active developer community
+* Multiple versions released within 1–2 years
+
+### 5️⃣ Supports All Major GenAI Use Cases
+
+Works for building:
+
+* Chatbots
+* RAG-based systems
+* Autonomous AI agents
+* Memory-based conversational apps
+
+LangChain is like a **Swiss Army Knife** for LLM app development.
+
+## 🎯 Why Start with LangChain First?
+
+LangChain overlaps with almost every topic of the **User Side** of GenAI.
+
+By learning LangChain, you get exposure to:
+
+* LLM APIs
+* Hugging Face and Ollama
+* Prompt engineering basics
+* RAG workflows
+* AI agents
+* Parts of LLM Ops
+
+Once LangChain is complete, learning other concepts becomes easier.
+
+## 🗂 LangChain Playlist Structure
+
+The complete playlist is divided into **three major parts**:
+
+### 📍 Part 1 — Fundamentals
+
+You will learn:
+
+* What is LangChain and why it is needed
+* LangChain components
+* Integrating LLM models
+* Working with prompts
+* Parsing LLM outputs
+* Runnables and LCEL (LangChain Expression Language)
+* Understanding and using Chains
+* Memory in chat-based applications
+
+### 📍 Part 2 — RAG (Retrieval Augmented Generation)
+
+You will learn:
+
+* Document loaders
+* Text splitters
+* Embeddings
+* Vector databases
+* Retrievers
+* Building a complete RAG application from scratch
+
+### 📍 Part 3 — AI Agents
+
+Topics include:
+
+* Tools and toolkits
+* Tool calling
+* Agent workflows
+* Building a full-fledged AI Agent
+
+**Total planned videos:** ~17 (may increase if required)
+
+## 🎯 Focus Areas for This Playlist
+
+Nitesh’s teaching goals:
+
+### 🔹 Updated Content
+
+* Teach using the latest **LangChain v3** version
+* Earlier versions were different, so updated learning is essential
+
+### 🔹 Clarity over Copy-Paste
+
+* Not just writing code
+* Understanding how LangChain works internally
+
+### 🔹 Conceptual Understanding
+
+Learn core ideas like:
+
+* Chains
+* LCEL
+* Memory
+* Runnables
+
+Concepts stay relevant even if new versions release.
+
+### 🔹 Covering the Most Important 80%
+
+* Only the most practical LangChain features used in real projects
+
+## 🕒 Timeline
+
+* Playlist starts in **1–2 days**
+* **2 videos per week**
+* Around **8 weeks** to complete all videos
+* Runs along with other courses like PyTorch and the Builder-side curriculum
+
+## 🔚 Final Thoughts
+
+LangChain is a great starting point if you want to build Generative AI applications in the real world.
+Once you master it, you can create:
+
+* Chatbots
+* RAG systems
+* AI agents
+* Many other GenAI workflows
+
+This playlist is designed to be practical, clear, and future-proof.
+
+## 💬 One-Line Summary
+
+**LangChain is the best starting point to build real-world Generative AI applications using LLMs.**
