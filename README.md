@@ -716,3 +716,416 @@ This is why agents are considered the next big thing in AI.
 * Understanding them gives a complete foundation.
 * Next videos will dive deeper into each component, starting with Models.
 * No code yet — this video builds conceptual understanding first.
+
+# 📌 LangChain Models – Video 3
+
+👋 **Introduction**
+
+In this section, we explore one of the most important components of LangChain: **Models**. By the end of this part, you will understand:
+
+* What models are in LangChain
+* Types of models
+* How to use them with code examples
+* Differences between **LLMs** and **Chat Models**
+
+This part is practical and code-driven, making it easier to understand.
+
+---
+
+## 🔁 **Recap of Previous Videos**
+
+### **Video-1 Covered:**
+
+* What LangChain is
+* Why LangChain is needed
+* Types of applications built using LangChain
+* LangChain alternatives
+
+### **Video-2 Covered:**
+
+LangChain core components:
+
+* Models
+* Prompts
+* Chains
+* Agents
+* How and where each component is used
+
+---
+
+## 🤖 **What Are Models in LangChain?**
+
+LangChain provides a common interface to interact with different AI models without worrying about how each model behaves internally.
+
+### **Types of Models**
+
+| Model Type                 | Input | Output            | Use-case                          |
+| -------------------------- | ----- | ----------------- | --------------------------------- |
+| **Language Models (LLMs)** | Text  | Text              | Chatbots, summarization, Q/A      |
+| **Embedding Models**       | Text  | Numbers (Vectors) | Semantic search, RAG applications |
+
+### **Simple Definition**
+
+> **Models in LangChain act as a bridge between your code and various AI models.**
+
+---
+
+## 🧠 **Language Models**
+
+A **Language Model** takes text as input and gives text as output.
+
+**Example:**
+
+```
+Input: "What is the capital of India?"
+Output: "New Delhi"
+```
+
+### **Types of Language Models**
+
+| Type           | Name                 | Purpose                              |
+| -------------- | -------------------- | ------------------------------------ |
+| **LLM**        | Large Language Model | General text generation              |
+| **Chat Model** | Chat-based model     | Used to build assistants or chatbots |
+
+---
+
+## 🔄 **LLM vs Chat Model**
+
+| Feature        | LLM                     | Chat Model                    |
+| -------------- | ----------------------- | ----------------------------- |
+| Training       | Trained on generic text | Trained on chat conversations |
+| Input          | Single text string      | List of chat messages         |
+| Output         | Plain text              | Structured output             |
+| Role awareness | ❌ No                    | ✅ Yes                         |
+| Memory support | ❌ No                    | ✅ Yes                         |
+| Use case       | Summarization, coding   | Assistants, chatbots          |
+
+### 💡 Important
+
+LangChain is gradually moving away from **LLMs** in favor of **Chat Models**.
+
+---
+
+## 🛠 **Setup for Coding**
+
+### 1️⃣ Create a Project Folder
+
+```
+LangChain-Models/
+```
+
+### 2️⃣ Create Virtual Environment
+
+```
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 3️⃣ Install Required Libraries
+
+Create a file `requirements.txt` and add the required packages.
+Then run:
+
+```
+pip install -r requirements.txt
+```
+
+### 4️⃣ Test LangChain Installation
+
+```python
+import langchain
+print(langchain.__version__)
+```
+
+---
+
+## 📁 **Project Structure**
+
+```
+LangChain-Models/
+│── requirements.txt
+│── .env
+│── llms/
+│── chat_models/
+│── embedding_models/
+```
+
+---
+
+## 💻 **LLM Code Demo Using OpenAI**
+
+### Step-1: Add API Key in `.env`
+
+```
+OPENAI_API_KEY="your_api_key_here"
+```
+
+### Step-2: Write Code (llms/llm_demo.py)
+
+```python
+from langchain_openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+llm = OpenAI(model="gpt-3.5-turbo-instruct")
+result = llm.invoke("What is the capital of India?")
+print(result)
+```
+
+**Output:**
+
+```
+New Delhi
+```
+
+---
+
+## 💬 **Chat Model Demo Using GPT-4o**
+
+```python
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+model = ChatOpenAI(model="gpt-4o")
+result = model.invoke("What is the capital of India?")
+print(result.content)
+```
+
+**Output:**
+
+```
+New Delhi
+```
+
+> Chat Models return structured responses, so we use `.content`.
+
+---
+
+## 🎛 **Important Parameters**
+
+### **Temperature** (Controls creativity)
+
+| Value     | Behavior              |
+| --------- | --------------------- |
+| 0 – 0.3   | Accurate, predictable |
+| 0.5 – 0.7 | Balanced              |
+| 0.9 – 1.5 | Creative              |
+
+### Example
+
+```python
+model = ChatOpenAI(model="gpt-4o", temperature=1.2)
+```
+
+### **Max Tokens** (Output length limit)
+
+```python
+model = ChatOpenAI(model="gpt-4o", max_completion_tokens=20)
+```
+
+---
+
+## ✨ **Why Chat Models Are Better**
+
+✔ Handle conversation history
+✔ Understand roles
+✔ Ideal for chatbots & AI assistants
+
+Industry adoption is shifting toward Chat Models.
+
+---
+
+## 🚀 **What’s Next?**
+
+Upcoming topics:
+
+* Anthropic Claude Chat Model
+* Google Gemini Chat Model
+* Open-source models (LLaMA, Mistral, DeepSeek)
+* Embedding Models + RAG Demo
+
+# 🔍 Open-Source Models –
+
+Open-source models are freely available models that developers can download and run on their own machines. They offer flexibility and control, but also come with challenges.
+
+---
+
+## ✅ Advantages of Open-Source Models
+
+* You can modify and fine-tune them.
+* You can run them locally without depending on a third party.
+* Good for privacy-sensitive applications.
+
+---
+
+## ❌ Disadvantages of Open-Source Models
+
+| Problem                    | Explanation                                                                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Strong hardware required   | Running models on your machine needs a powerful GPU, lots of RAM, and good storage. Weak machines hang or crash.                   |
+| Complex setup              | Installing dependencies, downloading models, and configuration can be difficult.                                                   |
+| Less refined responses     | Open-source models are not fine-tuned with human feedback (RLHF), so answers may feel less polished than OpenAI / Gemini / Claude. |
+| Limited multimodal support | Most open-source models currently handle text only, not images or audio.                                                           |
+
+---
+
+## 🚀 Working With Open-Source Models
+
+We use two approaches:
+
+### 1️⃣ Using Hugging Face Inference API (Online)
+
+* The model stays on Hugging Face servers.
+* We call it using an API key.
+* No need to download the model.
+
+**Steps:**
+
+1. Create a Hugging Face account.
+2. Go to **Access Tokens** and create a token.
+3. Save the token in `.env` file:
+
+```
+HUGGINGFACEHUB_API_TOKEN=your_token_here
+```
+
+4. Import classes in Python:
+
+```python
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+```
+
+5. Provide model repo ID (example model used in lecture):
+
+```
+TinyLlama/TinyLlama-1.1B-Chat-v1.0
+```
+
+6. Invoke the model and print the result.
+
+---
+
+### 2️⃣ Download the Model Locally
+
+Here we download the model to our computer and run it without API calls.
+
+**Important Notes**
+
+* First-time execution downloads:
+
+  * Model weights
+  * Tokenizer
+  * Config files
+* These are stored in Hugging Face cache
+* On weak hardware, the model may take 10+ minutes to run, may hang the PC
+
+**To change download location:**
+
+```python
+import os
+os.environ["HF_HOME"] = "D:/huggingface_cache"
+```
+
+**Then run the model using:**
+
+```python
+from langchain_huggingface import ChatHuggingFace, HuggingFacePipeline
+```
+
+---
+
+## 🧩 Embedding Models
+
+Embedding Models convert text into numeric vectors. These vectors represent meaning, so we can compare texts based on similarity.
+
+### Why embeddings?
+
+Used for:
+
+* Semantic search
+* RAG (Retrieval Augmented Generation)
+* Clustering
+* Document similarity checking
+
+---
+
+## 🔡 Embeddings Using OpenAI
+
+```python
+from langchain_openai import OpenAIEmbeddings
+emb = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=32)
+```
+
+**Output** → A 32-dimensional vector representing the meaning of the text.
+
+* More dimensions = More context
+* Less dimensions = Cheaper & faster
+
+### 📚 Embedding Multiple Documents
+
+```python
+emb.embed_documents(["Paris is the capital of France", "Delhi is the capital of India"])
+```
+
+This returns a list of embedding vectors.
+
+---
+
+## 🔥 Using Open-Source Embedding Model (Local)
+
+**Model used:** `sentence-transformers/all-MiniLM-L6-v2`
+
+* Size: ~90 MB
+* Output: 384-dim vectors
+* Good for semantic search
+
+```python
+from langchain_huggingface import HuggingFaceEmbeddings
+emb = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+```
+
+---
+
+## 🔍 Document Similarity Search (Mini Project)
+
+**Goal:** Given a user question, find which document is most related.
+
+**Steps:**
+
+1. Convert all documents into vectors (embeddings)
+2. Convert query into a vector
+3. Compare query vector with document vectors using cosine similarity
+4. Highest score = most relevant document
+
+```python
+from sklearn.metrics.pairwise import cosine_similarity
+cosine_similarity(query_vector, document_vectors)
+```
+
+This is the foundation of RAG-based AI systems.
+
+---
+
+## 💡 Why Store Embeddings?
+
+Generating embeddings again and again is costly.
+
+**Better approach:**
+
+| Need                        | Solution                                              |
+| --------------------------- | ----------------------------------------------------- |
+| Store embeddings            | Use a Vector Database (like Pinecone, Chroma, Qdrant) |
+| Retrieve nearest embeddings | Use similarity search                                 |
+
+This is how modern chatbots search your documents efficiently.
+
+---
+
+✨ End of Notes
+
+
+
