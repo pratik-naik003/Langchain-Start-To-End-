@@ -1125,7 +1125,536 @@ This is how modern chatbots search your documents efficiently.
 
 ---
 
-✨ End of Notes
+🚀 LangChain Playlist – Video 6
+
+🧠 What We Learned So Far (Recap)
+
+* **Video 1** – Introduction to LangChain and why we need it as a framework.
+* **Video 2** – The 6 major components of LangChain.
+* **Video 3** – Deep dive into the Models component.
+* **Video 4 (current video)** – Understanding Prompts in LangChain.
+
+---
+
+🔥 **What Are Prompts?**
+
+A prompt is the message you send to an LLM (like GPT-4) asking it to perform a task.
+
+**Example:**
+
+```
+model.invoke("Write a five-line poem on cricket")
+```
+
+The text `"Write a five-line poem on cricket"` → **Prompt**
+
+### Prompts can be:
+
+| Type  | Example                                         |
+| ----- | ----------------------------------------------- |
+| Text  | "Explain transformers in simple words"          |
+| Image | Upload an image → ask "Identify objects inside" |
+| Audio | Upload a song → "Who is the singer?"            |
+| Video | Upload video → "Summarize this"                 |
+
+In this video, we focus only on **text prompts**, because 99% of real-world apps use them today.
+
+---
+
+💡 **Why Are Prompts Important?**
+
+* The output of LLMs depends heavily on the prompt.
+* A slight change in prompt → completely different answer.
+* That’s why **Prompt Engineering** is a job profile now.
+
+---
+
+❄️ **Static vs. Dynamic Prompts**
+
+### ❌ Static Prompt
+
+User types the complete prompt manually.
+
+```
+[ Enter Prompt Here ] → "Summarize the paper Attention Is All You Need"
+```
+
+**Problems:**
+
+* Users can type wrong text, spelling mistakes, unclear instructions
+* Inconsistent results
+* No control over structure
+
+### ✔️ Dynamic Prompt
+
+We create a prompt template and fill only necessary user inputs.
+
+**Example template:**
+
+```
+Please summarize the research paper titled {paper_input}
+using {style_input} explanation in {length_input} format.
+
+Make sure the summary is accurate and simple.
+```
+
+User only selects:
+
+| Paper                       | Style                            | Length                |
+| --------------------------- | -------------------------------- | --------------------- |
+| "Attention is All You Need" | Code-heavy / Math-heavy / Simple | Short / Medium / Long |
+
+**Benefits:**
+
+* Consistent responses
+* Controlled structure
+* Better UX
+
+---
+
+🛠️ **Building a Dynamic Prompt UI (Streamlit)**
+
+### Install Dependencies
+
+```
+pip install streamlit langchain openai python-dotenv
+```
+
+### Import & Load Model
+
+```
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+import streamlit as st
+
+load_dotenv()
+model = ChatOpenAI()
+```
+
+### UI for Dynamic Inputs
+
+```
+paper_input = st.selectbox("Select Research Paper", [
+    "Attention Is All You Need",
+    "Word2Vec",
+    "BERT",
+    "Transformer"
+])
+
+style_input = st.selectbox("Select Style", [
+    "Simple", "Math-heavy", "Code-oriented"
+])
+
+length_input = st.selectbox("Summary Length", [
+    "Short", "Medium", "Long"
+])
+```
+
+---
+
+🧱 **Creating a Prompt Template**
+
+```
+from langchain_core.prompts import PromptTemplate
+
+template = """
+Please summarize the research paper titled {paper_input}
+using {style_input} explanation in {length_input} length.
+
+Include mathematical equations if present and explain concepts clearly.
+"""
+
+prompt = PromptTemplate(
+    template=template,
+    input_variables=["paper_input", "style_input", "length_input"]
+)
+```
+
+### Invoke the prompt
+
+```
+filled_prompt = prompt.invoke({
+    "paper_input": paper_input,
+    "style_input": style_input,
+    "length_input": length_input
+})
+
+result = model.invoke(filled_prompt)
+st.write(result.content)
+```
+
+---
+
+❓ **Why Use PromptTemplate Instead of f-strings?**
+
+| Feature            | f-string | PromptTemplate              |
+| ------------------ | -------- | --------------------------- |
+| Validation         | ❌ No     | ✅ Yes                       |
+| Reusable templates | ❌ Hard   | ✅ Easy (can save/load JSON) |
+| Works with Chains  | ❌ No     | ✅ Yes                       |
+
+**Validation example:**
+
+```
+prompt = PromptTemplate(
+    template=template,
+    input_variables=["paper_input", "style_input"],
+    validate_template=True
+)
+```
+
+If a variable is missing → error immediately.
+
+---
+
+💾 **Saving Prompt Template to JSON**
+
+```
+prompt.save("template.json")
+```
+
+### Load later
+
+```
+from langchain_core.prompts import load_prompt
+prompt = load_prompt("template.json")
+```
+
+---
+
+🔗 **Using PromptTemplate with Chains**
+
+```
+chain = prompt | model
+result = chain.invoke({
+    "paper_input": paper_input,
+    "style_input": style_input,
+    "length_input": length_input
+})
+```
+
+Only **one invoke** is needed now.
+
+---
+
+🤖 **Building a Simple Chatbot**
+
+```
+model = ChatOpenAI()
+
+while True:
+    msg = input("You: ")
+    if msg == "exit":
+        break
+    reply = model.invoke(msg)
+    print("AI:", reply.content)
+```
+
+**Problem** → AI forgets previous messages.
+
+---
+
+🧠 **Add Chat History**
+
+```
+chat_history = []
+
+while True:
+    user_msg = input("You: ")
+    if user_msg == "exit":
+        break
+
+    chat_history.append(user_msg)
+    result = model.invoke(chat_history)
+    chat_history.append(result.content)
+
+    print("AI:", result.content)
+```
+
+Still missing: who said what.
+
+---
+
+🏷️ **Using Message Types**
+
+LangChain supports **3 types of messages**:
+
+| Message Type  | Meaning               |
+| ------------- | --------------------- |
+| SystemMessage | Sets AI role/behavior |
+| HumanMessage  | User input            |
+| AIMessage     | Model response        |
+
+```
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+
+messages = [
+    SystemMessage(content="You are a helpful assistant.")
+]
+
+while True:
+    user_msg = input("You: ")
+    if user_msg == "exit":
+        break
+
+    messages.append(HumanMessage(content=user_msg))
+    result = model.invoke(messages)
+    messages.append(AIMessage(content=result.content))
+
+    print("AI:", result.content)
+```
+
+Now each message is labeled → AI understands context properly.
+
+---
+
+🎯 **Summary**
+
+| Concept        | Why Important                                |
+| -------------- | -------------------------------------------- |
+| Prompts        | Control model output                         |
+| Static Prompt  | Bad for real apps                            |
+| Dynamic Prompt | Better customisation + structure             |
+| PromptTemplate | Validation + Reusability + Works with Chains |
+| Message Types  | Enable memory + context-aware chatbots       |
+
+---
+
+🟢 Quick Recap of invoke()
+
+You can use `model.invoke()` in two ways:
+
+---
+
+### **1️⃣ Send a Single Message**
+
+Used for **one-time queries** like:
+
+* Summarizing a paper
+* Translating text
+* Asking a standalone question
+
+You can:
+✔️ send a **static prompt**
+✔️ or a **dynamic prompt** using `PromptTemplate`
+
+---
+
+### **2️⃣ Send a List of Messages**
+
+Used for **multi-turn conversations** (*chatbots*)
+
+Messages can be:
+
+* **SystemMessage** → defines AI behavior
+* **HumanMessage** → user input
+* **AIMessage** → model responses
+
+You maintain a **chat history** list and pass it each time.
+
+---
+
+## 🆕 CHAT PROMPT TEMPLATE
+
+So far we used `PromptTemplate` for single prompts.
+For multiple messages, LangChain gives us:
+
+### **`ChatPromptTemplate`**
+
+Use it when you want **dynamic values inside multiple messages** in a conversation.
+
+---
+
+### 📌 Why do we need `ChatPromptTemplate`?
+
+Consider this prompt:
+
+```
+System Message → You are a helpful {domain} expert
+Human Message → Explain about {topic}
+```
+
+Both `{domain}` and `{topic}` are **dynamic** → filled at runtime.
+
+---
+
+## 🧱 Creating a Chat Prompt Template
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import SystemMessage, HumanMessage
+
+chat_template = ChatPromptTemplate.from_messages([
+    SystemMessage(content="You are a helpful {domain} expert."),
+    HumanMessage(content="Explain in simple terms, what is {topic}?")
+])
+
+prompt = chat_template.invoke({
+    "domain": "cricket",
+    "topic": "What is doosra?"
+})
+
+print(prompt)
+```
+
+### ❗ Issue
+
+The placeholders **won’t fill** using this syntax.
+LangChain treats message classes differently here.
+
+---
+
+### ✔️ Correct Syntax (**Recommended**)
+
+Use **tuples** instead of message classes:
+
+```python
+from langchain_core.prompts import ChatPromptTemplate
+
+chat_template = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful {domain} expert."),
+    ("human", "Explain in simple terms, what is {topic}?")
+])
+
+prompt = chat_template.invoke({
+    "domain": "cricket",
+    "topic": "What is doosra?"
+})
+
+print(prompt)
+```
+
+### ✅ Output
+
+```
+System: You are a helpful cricket expert.
+Human: Explain in simple terms, what is doosra?
+```
+
+---
+
+## 🧩 Difference Summary
+
+| Feature        | PromptTemplate | ChatPromptTemplate |
+| -------------- | -------------- | ------------------ |
+| Use Case       | Single prompt  | Multiple messages  |
+| Dynamic fields | Yes            | Yes                |
+| Messages       | No             | Yes                |
+| Best for       | Summaries, QA  | Chatbots, agents   |
+
+---
+
+## 🟣 MESSAGE PLACEHOLDER
+
+### ❓ What is it?
+
+A **Message Placeholder** inserts an **entire list of messages** (chat history) into a `ChatPromptTemplate` dynamically.
+
+Used when:
+✔️ Chat history is stored somewhere (DB / file)
+✔️ You want new messages to continue previous context
+
+---
+
+### 🧠 Real Use Case
+
+A user chatted earlier:
+
+```
+User: I want a refund for order 12345
+Bot: Refund initiated
+```
+
+Stored this chat.
+
+Next day user asks:
+
+```
+Where is my refund?
+```
+
+The bot must understand previous context → load chat history.
+
+---
+
+## 🛠️ Code Example – Using MessagePlaceholder
+
+### Step 1: Import
+
+```python
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import HumanMessage
+```
+
+### Step 2: Create Chat Template
+
+```python
+chat_template = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful customer support agent."),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{query}")
+])
+```
+
+`MessagesPlaceholder("chat_history")` → placeholder for past messages.
+
+---
+
+### Step 3: Load Previous Chat History
+
+```python
+chat_history = []
+with open("chat_history.txt") as f:
+    for line in f.readlines():
+        chat_history.append(line.strip())
+```
+
+### Step 4: Invoke Template
+
+```python
+prompt = chat_template.invoke({
+    "chat_history": chat_history,
+    "query": "Where is my refund?"
+})
+
+print(prompt)
+```
+
+### 🟢 Output
+
+```
+System: You are a helpful customer support agent.
+Human: I want a refund for order 12345
+AI: Your refund is initiated...
+Human: Where is my refund?
+```
+
+Now the LLM understands context from previous chats.
+
+---
+
+## 🎯 Final Takeaways
+
+| Concept                   | Purpose                               |
+| ------------------------- | ------------------------------------- |
+| PromptTemplate            | Create dynamic single prompts         |
+| ChatPromptTemplate        | Create dynamic conversational prompts |
+| MessagesPlaceholder       | Insert past chat history dynamically  |
+| invoke() single message   | One-time tasks                        |
+| invoke() list of messages | Chatbots / multi-turn dialogue        |
+
+---
+
+🎉 **End of Prompts Component**
+
+You now understand:
+
+* Static vs Dynamic prompts
+* PromptTemplate
+* ChatPromptTemplate
+* Message types (System/Human/AI)
+* MessagePlaceholder
+* Why prompts are critical in LangChain
 
 
 
