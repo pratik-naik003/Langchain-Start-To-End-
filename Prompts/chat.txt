@@ -1,0 +1,8 @@
+Human: Hi! How are you?
+AI: I'm doing great! How can I help you today?
+
+Human: Can you tell me what AI means?
+AI: Sure! AI stands for Artificial Intelligence. It means creating computers that can think and learn like humans.
+
+Human: Oh nice! Can AI solve math problems too?
+AI: Absolutely! Modern AI models can easily solve math problems, explain steps, and generate answers
