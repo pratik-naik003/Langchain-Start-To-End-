@@ -1849,7 +1849,239 @@ Use when working with multiple programming languages (Python + JavaScript).
 
 ---
 
-End of Video 7 Notes 🚀
+📌 **LangChain Output Parsers – Video 8**
 
+## 🚀 Why Do We Need Structured Output?
+
+When you ask any LLM (like GPT, LLaMA, etc.) a question, it replies in plain text. This plain text is:
+
+❌ unstructured
+❌ hard to send to APIs or databases
+❌ difficult to extract specific values from
+
+To solve this, we use **Structured Output**. We instruct the model to return output in a fixed format such as:
+
+* JSON
+* key–value pairs
+* lists
+* objects with schema
+
+---
+
+## 🧠 What Are Output Parsers?
+
+Output Parsers help convert raw LLM text responses into structured formats like:
+
+✔ JSON
+✔ CSV
+✔ Python dict
+✔ Pydantic models
+
+They ensure:
+
+* Consistent output
+* Easy integration with other systems
+* Cleaner parsing of responses
+
+---
+
+## 🔥 Four Most Important Output Parsers
+
+LangChain provides many parsers, but you mainly use these 4:
+
+| Parser                     | Purpose                              | Schema Enforced? | Data-Type Validation? |
+| -------------------------- | ------------------------------------ | ---------------- | --------------------- |
+| **StringOutputParser**     | Convert response into plain string   | ❌                | ❌                     |
+| **JsonOutputParser**       | Return JSON output                   | ❌                | ❌                     |
+| **StructuredOutputParser** | Return JSON with a defined structure | ✔                | ❌                     |
+| **PydanticOutputParser**   | JSON + validation using Pydantic     | ✔                | ✔                     |
+
+---
+
+## 1️⃣ **StringOutputParser**
+
+### 📍 When to use?
+
+Use when you simply want the **text output** and want to pass it to another step in a chain.
+
+### 🧩 Example Use Case
+
+Ask for a detailed report → summarize it again using the model.
+
+### ✅ CODE
+
+```python
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StringOutputParser
+from langchain_core.runnables import RunnableSequence
+
+model = ChatOpenAI(model="gpt-4o-mini")
+parser = StringOutputParser()
+
+template1 = PromptTemplate(
+    template="Write a detailed report on {topic}",
+    input_variables=["topic"]
+)
+
+template2 = PromptTemplate(
+    template="Summarize the following text in 5 lines:\n{text}",
+    input_variables=["text"]
+)
+
+chain = RunnableSequence(
+    template1 | model | parser | template2 | model | parser
+)
+
+result = chain.invoke({"topic": "Black Hole"})
+print(result)
+```
+
+### 📌 Why useful?
+
+It extracts only the **text** from model output and ignores metadata like token usage.
+
+---
+
+## 2️⃣ **JsonOutputParser**
+
+### 📍 When to use?
+
+If your model should return a **JSON object**.
+
+❌ No schema enforcement
+❌ LLM decides JSON structure
+
+### ✨ CODE
+
+```python
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_openai import ChatOpenAI
+
+parser = JsonOutputParser()
+model = ChatOpenAI(model="gpt-4o-mini")
+
+template = PromptTemplate(
+    template="Give me the name, age, and city of a fictional person.\n{format_instructions}",
+    partial_variables={"format_instructions": parser.get_format_instructions()}
+)
+
+prompt = template.format()
+response = model.invoke(prompt)
+final = parser.parse(response.content)
+
+print(final)
+print(type(final))  # dict
+```
+
+### 📌 Limitation
+
+JSON format is returned, but you **cannot enforce** which keys or types must appear.
+
+---
+
+## 3️⃣ **StructuredOutputParser**
+
+### 📍 Why this?
+
+You can **force the model** to return JSON in a **predefined structure**.
+
+✔ schema enforced
+❌ no validation of values
+
+### 🧩 Example
+
+```python
+from langchain.schema import ResponseSchema, StructuredOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+
+model = ChatOpenAI(model="gpt-4o-mini")
+
+schemas = [
+    ResponseSchema(name="fact_one", description="Fact one about topic"),
+    ResponseSchema(name="fact_two", description="Fact two about topic"),
+    ResponseSchema(name="fact_three", description="Fact three about topic"),
+]
+
+parser = StructuredOutputParser.from_response_schemas(schemas)
+
+template = PromptTemplate(
+    template="Give 3 facts about {topic}\n{format_instructions}",
+    input_variables=["topic"],
+    partial_variables={"format_instructions": parser.get_format_instructions()}
+)
+
+response = model.invoke(template.format(topic="Black Hole"))
+final = parser.parse(response.content)
+print(final)
+```
+
+---
+
+## 4️⃣ **PydanticOutputParser – THE BEST**
+
+### 📍 Why best?
+
+✔ Enforces structure
+✔ Validates data types
+✔ Rejects wrong formats
+
+### 🧩 Example
+
+```python
+from pydantic import BaseModel, Field
+from langchain_core.output_parsers import PydanticOutputParser
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+
+class Person(BaseModel):
+    name: str = Field(description="Name of the person")
+    age: int = Field(gt=18, description="Age must be > 18")
+    city: str = Field(description="City name")
+
+parser = PydanticOutputParser(pydantic_object=Person)
+model = ChatOpenAI(model="gpt-4o-mini")
+
+template = PromptTemplate(
+    template="Generate details of a fictional {place} person\n{format_instructions}",
+    input_variables=["place"],
+    partial_variables={"format_instructions": parser.get_format_instructions()}
+)
+
+prompt = template.format(place="Indian")
+response = model.invoke(prompt)
+final = parser.parse(response.content)
+print(final)
+```
+
+### 📌 Note
+
+If the model gives `"age": "35 years"` → **Pydantic will throw an error** because age must be an integer.
+
+---
+
+## 🏁 Summary Table
+
+| Parser                     | JSON? | Structure? | Validation? | Use Case              |
+| -------------------------- | ----- | ---------- | ----------- | --------------------- |
+| **StringOutputParser**     | ❌     | ❌          | ❌           | Just get text         |
+| **JsonOutputParser**       | ✔     | ❌          | ❌           | Quick JSON            |
+| **StructuredOutputParser** | ✔     | ✔          | ❌           | Fixed schema          |
+| **PydanticOutputParser**   | ✔     | ✔          | ✔           | Production grade apps |
+
+---
+
+## 🎯 Conclusion
+
+If you're building:
+
+| App Type                         | Recommended Parser         |
+| -------------------------------- | -------------------------- |
+| Simple chatbots                  | **StringOutputParser**     |
+| JSON API responses               | **JsonOutputParser**       |
+| Integrations with backend DB     | **StructuredOutputParser** |
+| Real apps with strict validation | **PydanticOutputParser** ✔ |
 
 
