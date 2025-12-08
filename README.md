@@ -2085,3 +2085,196 @@ If you're building:
 | Real apps with strict validation | **PydanticOutputParser** ✔ |
 
 
+# 📌 LangChain Runnables — Simple Notes
+
+## ❓ Why do Runnables exist?
+
+### Background
+
+When ChatGPT was launched (2022), companies started creating LLM-based applications. LangChain was created to make building such apps easier.
+
+### Early LangChain Structure
+
+LangChain initially offered many components:
+
+| Component        | Purpose                      |
+| ---------------- | ---------------------------- |
+| LLMs             | Talk to language models      |
+| Prompt Templates | Build prompts dynamically    |
+| Document Loaders | Load files (PDF, text, etc.) |
+| Text Splitters   | Break large text into chunks |
+| Embeddings       | Convert text into vectors    |
+| Vector Stores    | Store embeddings             |
+| Retrievers       | Search relevant chunks       |
+| Output Parsers   | Format final answer          |
+
+### Problem
+
+These components were not standardized. Each one had different methods:
+
+| Component      | Method                     |
+| -------------- | -------------------------- |
+| LLM            | `predict()`                |
+| PromptTemplate | `format()`                 |
+| Retriever      | `get_relevant_documents()` |
+| Parser         | `parse()`                  |
+
+⚠ Because of different function names, the LangChain team had to build custom chains for every use-case.
+
+This created:
+
+* Too many chain classes (LLMChain, SequentialChain, RetrievalQAChain, etc.)
+* Huge codebase
+* High learning curve → users confused
+
+---
+
+## 🧠 What are Runnables?
+
+**Runnable = a standard unit of work**
+
+Think of runnables like **LEGO blocks**:
+
+* ✔ Takes an input
+* ✔ Does one specific task
+* ✔ Produces an output
+* ✔ Can connect with another runnable
+
+### Common Interface for all runnables
+
+```
+invoke(input)    # one input → one output
+batch(list)      # many inputs → many outputs
+stream(input)    # stream output chunks
+```
+
+Because they share the same interface, **all runnables can connect to each other**.
+
+---
+
+## 🟢 Why Runnables solve everything?
+
+### Before runnables
+
+```
+Prompt → format → LLM → predict → parse → output
+```
+
+Every component had its own method — chaos.
+
+### After runnables
+
+```
+Prompt.invoke → LLM.invoke → Parser.invoke
+```
+
+One universal interface → **Composable workflows**.
+
+---
+
+## 🔧 Code Examples
+
+### 1️⃣ Dummy LLM
+
+```python
+import random
+
+class FakeLLM:
+    def invoke(self, prompt):
+        responses = [
+            "Delhi is the capital of India",
+            "AI stands for Artificial Intelligence",
+            "IPL is a cricket league"
+        ]
+        return {"response": random.choice(responses)}
+```
+
+### 2️⃣ Dummy Prompt Template
+
+```python
+class FakePromptTemplate:
+    def __init__(self, template):
+        self.template = template
+
+    def invoke(self, inputs):
+        return self.template.format(**inputs)
+```
+
+**Usage:**
+
+```python
+prompt = FakePromptTemplate("Write a poem about {topic}")
+print(prompt.invoke({"topic": "India"}))
+```
+
+### 3️⃣ Runnable Connector (like a chain)
+
+```python
+class RunnableConnector:
+    def __init__(self, runnables):
+        self.runnables = runnables
+
+    def invoke(self, input_data):
+        for runnable in self.runnables:
+            input_data = runnable.invoke(input_data)
+        return input_data
+```
+
+### 4️⃣ Build a simple chain
+
+```python
+prompt = FakePromptTemplate("Write a poem about {topic}")
+llm = FakeLLM()
+
+chain = RunnableConnector([prompt, llm])
+print(chain.invoke({"topic": "Cricket"}))
+```
+
+### 5️⃣ Add a Parser Runnable
+
+```python
+class FakeParser:
+    def invoke(self, llm_output):
+        return llm_output["response"]
+
+parser_chain = RunnableConnector([prompt, llm, FakeParser()])
+print(parser_chain.invoke({"topic": "India"}))
+```
+
+---
+
+## 🧩 Composing Chains (Chain inside Chain)
+
+```python
+# Chain 1 : Generate Joke
+joke_template = FakePromptTemplate("Tell a joke about {topic}")
+joke_chain = RunnableConnector([joke_template, llm])
+
+# Chain 2 : Explain the Joke
+explain_template = FakePromptTemplate("Explain this joke: {response}")
+explain_chain = RunnableConnector([explain_template, llm, FakeParser()])
+
+# Final Chain
+final_chain = RunnableConnector([joke_chain, explain_chain])
+print(final_chain.invoke({"topic": "Programming"}))
+```
+
+---
+
+## 🎯 Summary (Exam Revision Style)
+
+| Concept     | Meaning                                     |
+| ----------- | ------------------------------------------- |
+| Runnables   | Standard building blocks in LangChain       |
+| Why needed  | Too many inconsistent Chain classes earlier |
+| Benefit     | Single interface → easy composition         |
+| invoke()    | Universal method to run work                |
+| Composition | Runnable → Chain → Chain of Chains          |
+
+---
+
+## 🌟 One-line Understanding
+
+**Runnables turned LangChain into LEGO** — every component clicks together because all have one common interface: `invoke()`
+
+
