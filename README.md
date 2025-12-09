@@ -2507,5 +2507,225 @@ prompt | model | parser
 
 This is the future direction of LangChain.
 
+# LangChain – Document Loaders (Simple Notes)
+
+## Why this Video?
+
+* The creator planned to teach Memory in LangChain.
+* But LangChain is moving the Memory feature into LangGraph.
+* So, Memory will now be taught later with LangGraph.
+* From this video onwards, a new topic begins:
+  **RAG-based (Retrieval Augmented Generation) applications using LangChain**.
+
+## What Did We Learn So Far? (Recap)
+
+### Previous videos covered:
+
+#### Core LangChain Components
+
+* Models
+* Prompts
+* Chains
+* Explained with hands-on code.
+
+#### Important LangChain Concepts
+
+* Especially **Runnables**.
+
+At this point, fundamentals of LangChain are clear, so now we are ready to build **LLM-based applications**.
+
+---
+
+## What is RAG?
+
+**RAG = Retrieval Augmented Generation**
+
+A technique where:
+
+* LLM (e.g., GPT) + External Knowledge Base work together.
+* The model retrieves relevant information from external sources like:
+
+  * PDFs
+  * Company databases
+  * Personal documents
+  * Websites
+* Then generates accurate, updated, grounded answers.
+
+### Why RAG is Needed?
+
+ChatGPT cannot answer:
+
+* ❌ current affairs
+* ❌ personal emails
+* ❌ private company docs
+
+Because it wasn't trained on them.
+
+**RAG fixes this by connecting your LLM with your own data.**
+
+### Benefits of RAG
+
+* ✔ Up-to-date information
+* ✔ Privacy-safe (data stays with you)
+* ✔ No size limit on documents
+* ✔ Can handle large files using chunks
+
+---
+
+## RAG Components
+
+To build a RAG app, you need 4 components:
+
+1. **Document Loaders** → Load data
+2. **Text Splitters** → Break into chunks
+3. **Vector Databases** → Store embeddings
+4. **Retrievers** → Fetch relevant info
+
+**This video covers → Document Loaders**
+
+---
+
+## What are Document Loaders?
+
+Tools used to load data from different sources into LangChain and convert it into a standard **Document object**.
+
+Each Document has:
+
+* **page_content** → The actual text
+* **metadata** → Extra info like file name, page number, etc.
+
+No matter what file you load (PDF, CSV, website, etc.), LangChain converts it into the same format.
+
+---
+
+## Important Document Loaders
+
+### 1️⃣ TextLoader
+
+Loads `.txt` files.
+
+```python
+from langchain_community.document_loaders import TextLoader
+loader = TextLoader("cricket.txt", encoding="utf-8")
+docs = loader.load()
+```
+
+**Output:** A list of Document objects.
+
+**Use cases:** transcripts, log files, text snippets
+
+---
+
+### 2️⃣ PyPDFLoader
+
+Loads PDF pages. Each page becomes one Document.
+
+```python
+from langchain_community.document_loaders import PyPDFLoader
+loader = PyPDFLoader("deep_learning.pdf")
+docs = loader.load()
+```
+
+If PDF has 23 pages → **23 Document objects**.
+
+**Works best for text-based PDFs.** Not good for scanned images.
+
+**Other PDF loaders:**
+
+* PDFPlumberLoader → extract tables
+* UnstructuredPDFLoader → scanned images
+* PyMuPDFLoader → layout-heavy PDFs
+
+---
+
+### 3️⃣ DirectoryLoader
+
+Loads multiple files from a folder.
+
+```python
+from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
+loader = DirectoryLoader("books/", glob="*.pdf", loader_cls=PyPDFLoader)
+docs = loader.load()
+```
+
+If folder has 3 PDFs (326 + 392 + 468 pages) → **Total documents = 1186**
+
+---
+
+### Load vs Lazy Load
+
+| Load()                   | Lazy Load()                  |
+| ------------------------ | ---------------------------- |
+| Loads everything at once | Loads one document at a time |
+| Uses more memory         | Memory efficient             |
+| Returns list             | Returns generator            |
+| Good for small data      | Good for large datasets      |
+
+---
+
+### 4️⃣ WebBaseLoader
+
+Loads content from web pages.
+
+```python
+from langchain_community.document_loaders import WebBaseLoader
+loader = WebBaseLoader("https://flipkart.com/macbook")
+docs = loader.load()
+```
+
+Works best with **static HTML pages**.
+
+---
+
+### 5️⃣ CSVLoader
+
+Loads CSV rows. Each row = one Document.
+
+```python
+from langchain_community.document_loaders import CSVLoader
+loader = CSVLoader("ads.csv")
+docs = loader.load()
+```
+
+**Use cases:** analytics, column-based queries
+
+---
+
+## Other Loaders
+
+LangChain also has loaders for:
+
+* **Cloud storage** → AWS S3, GDrive, Dropbox
+* **Social media** → Reddit, Twitter, Slack
+* **Common file types** → JSON, HTML, YouTube transcripts, etc.
+
+---
+
+## Custom Document Loader
+
+If LangChain doesn't have a loader for your data source, you can build your own:
+
+```python
+class CustomLoader(BaseLoader):
+    def load(self):
+        # your logic
+```
+
+---
+
+## Summary
+
+* We started **RAG development** using LangChain.
+* First component learned: **Document Loaders**
+* Covered Text, PDF, Directory, Web, and CSV loaders.
+* Next videos will cover:
+  ✔ Text Splitters
+  ✔ Vector Databases
+  ✔ Retrievers
+  ➜ Finally build a complete **RAG app**.
+
+---
+
+End of Notes 🚀
 
 
