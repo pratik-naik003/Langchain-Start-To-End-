@@ -2728,4 +2728,219 @@ class CustomLoader(BaseLoader):
 
 End of Notes 🚀
 
+🚀 **Text Splitting in LangChain – Simple Notes**
+
+**What is Text Splitting?**
+Text Splitting means breaking a large document—like long PDFs, books, articles—into small parts (chunks) so that a Language Model (LLM) can process them effectively.
+
+---
+
+### ❗ Why do we need Text Splitting?
+
+LLMs cannot handle very large text at once because:
+
+**Context Length Limit**
+Every LLM has a limit.
+Example: If a model accepts 50,000 tokens, and your PDF has 1,00,000+ words, you must split it.
+
+**Better Embeddings**
+Embedding a huge paragraph reduces meaning accuracy. Small chunks capture meaning better.
+
+**Semantic Search works better**
+Searching among small chunks returns more accurate results.
+
+**Better Summarization**
+LLMs give poor summaries for giant text; splitting improves output.
+
+**Computational Efficiency**
+Small chunks = Less memory + faster processing + parallel execution.
+
+---
+
+### 🔥 Four Types of Text Splitting
+
+---
+
+### 1️⃣ Length-Based Text Splitting
+
+Split text based on a fixed size (characters or tokens).
+
+**Pros**
+✔️ Very simple & fast
+
+**Cons**
+❌ Doesn’t care about words, meaning, or sentence boundaries
+❌ May cut words in half
+
+**Code: Character-based Text Splitter**
+
+```python
+from langchain.text_splitter import CharacterTextSplitter
+
+text = "Your long text here..."
+
+splitter = CharacterTextSplitter(
+    chunk_size=100,      # size of each chunk
+    chunk_overlap=0,     # no overlap
+    separator=""         # split exactly at limit
+)
+
+chunks = splitter.split_text(text)
+print(chunks)
+```
+
+**🔁 Chunk Overlap**
+Chunk Overlap means some part of the previous chunk is added at the start of the next chunk.
+
+**Why?**
+Helps maintain context continuity.
+Recommended overlap: 10–20% of chunk size in RAG.
+
+```python
+splitter = CharacterTextSplitter(
+    chunk_size=100,
+    chunk_overlap=20
+)
+```
+
+---
+
+### 2️⃣ Text-Structure Based Splitting
+
+*(📌 Best for normal written text)*
+Also called **Recursive Character Text Splitter**.
+
+This method respects:
+
+* Paragraphs
+* Sentences
+* Words
+* Characters
+
+It tries to split at sentence boundaries first, then words, then characters if needed.
+
+🏆 Most used splitter in RAG
+
+**Code: Recursive Character Text Splitter**
+
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=300,
+    chunk_overlap=50
+)
+
+chunks = splitter.split_text(text)
+print(len(chunks), chunks[:2])
+```
+
+---
+
+### 3️⃣ Document-Structure Based Splitting
+
+Used when the document is not plain text, e.g.:
+
+* Python / JavaScript code
+* Markdown
+* HTML
+
+Each has its own structure and keywords (`class`, `def`, `<h1>`).
+LangChain provides language-aware splitters.
+
+**Code: Splitting Python Code**
+
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import Language
+
+code = """class A:
+    def hello(self):
+        print("hi")
+"""
+
+splitter = RecursiveCharacterTextSplitter.from_language(
+    language=Language.PYTHON,
+    chunk_size=200,
+    chunk_overlap=20
+)
+
+chunks = splitter.split_text(code)
+print(chunks)
+```
+
+**Splitting Markdown**
+
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import Language
+
+md = """# Title
+## Features
+- Point 1
+"""
+
+splitter = RecursiveCharacterTextSplitter.from_language(
+    language=Language.MARKDOWN,
+    chunk_size=200,
+    chunk_overlap=10
+)
+
+chunks = splitter.split_text(md)
+print(chunks)
+```
+
+---
+
+### 4️⃣ Semantic Meaning Based Splitting *(⚠️ Experimental)*
+
+This method splits text based on topic changes detected using embeddings.
+
+**Idea:**
+
+1. Convert each sentence into an embedding
+2. Compare similarities
+3. When meaning changes sharply → split
+
+Useful when paragraphs contain multiple topics.
+
+**Code: Semantic Splitting**
+
+```python
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain.embeddings.openai import OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings()
+splitter = SemanticChunker(
+    embeddings,
+    breakpoint_threshold_type="standard_deviation"
+)
+
+chunks = splitter.split_text(text)
+print(chunks)
+```
+
+❌ Results are currently inconsistent
+🔮 Likely to become popular in future RAG applications
+
+---
+
+### 🏁 Summary
+
+| Splitter Type       | When to Use     | Best For                       |
+| ------------------- | --------------- | ------------------------------ |
+| Length-Based        | Simple cases    | Quick splitting, small text    |
+| Recursive Character | Default choice  | RAG, embeddings, summarization |
+| Document-Based      | Structured docs | Code, Markdown, HTML           |
+| Semantic-Based      | Topic detection | Experimental research          |
+
+---
+
+### 🎯 What should YOU use?
+
+👉 Always start with **RecursiveCharacterTextSplitter** — it's accurate, context-aware, and ideal for RAG pipelines.
+
+---
+
+End of Notes 🚀
 
