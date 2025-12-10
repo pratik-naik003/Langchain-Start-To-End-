@@ -2944,3 +2944,305 @@ print(chunks)
 
 End of Notes 🚀
 
+📌 VECTOR STORES – COMPLETE SIMPLE NOTES + FULL CODE
+
+🚀 **Introduction**
+
+We are building RAG-based applications using LangChain. To build a RAG system, we need:
+
+1️⃣ Document Loaders – already learned
+2️⃣ Text Splitters – already learned
+3️⃣ Vector Stores – today's topic (very important!)
+
+Vector stores allow us to store embeddings and perform semantic similarity search.
+
+---
+
+❓ **Why Do We Need Vector Stores?**
+
+Imagine making an IMDb-like website that stores movie details such as name, director, actors, release date, and genre. This works fine until you want to add a **Movie Recommendation System**.
+
+---
+
+❌ **First Try: Keyword-Based Similarity**
+
+You compare movies based on similar keywords:
+
+* same actor?
+* same director?
+* same year?
+* same genre?
+
+But this fails because **keywords ≠ meaning**.
+
+Example:
+
+| User watches    | Suggested              | Reality                 |
+| --------------- | ---------------------- | ----------------------- |
+| My Name Is Khan | Kabhi Alvida Naa Kehna | Totally different story |
+
+Another case:
+
+| Movies                             | Similar Meaning | Keywords           |
+| ---------------------------------- | --------------- | ------------------ |
+| Taare Zameen Par, A Beautiful Mind | Same core idea  | Different keywords |
+
+So keyword matching is **not intelligent**.
+
+---
+
+🧠 **Better Solution: Compare Story Meaning**
+
+Instead of matching keywords, compare the meaning of plots. But computers do not understand text, so we convert text into numerical vectors called **embeddings**.
+
+---
+
+📌 **What are Embeddings?**
+
+Embeddings convert text meaning into numbers.
+
+```
+Text → Neural Network → Vector
+```
+
+Example embedding vector:
+
+```
+[0.78, -0.11, 0.62, ...] (512 dimensions)
+```
+
+Now we can compute similarity using **cosine similarity** – smaller angle → more similar.
+
+---
+
+⚠️ **Challenges When Using Embeddings**
+
+As the database grows to lakhs of items:
+
+1️⃣ Generating embeddings for all items
+2️⃣ Storing embeddings efficiently – SQL databases can't store vectors properly
+3️⃣ Performing semantic search FAST – comparing query with 10 lakh vectors is slow
+
+---
+
+🎯 **The Solution → Vector Stores**
+
+A **vector store** is a system designed to:
+✔ Store vectors (embeddings)
+✔ Retrieve them efficiently
+✔ Perform similarity search quickly
+✔ Store metadata along with vectors
+
+---
+
+🔑 **Key Features of Vector Stores**
+
+| Feature           | Purpose                              |
+| ----------------- | ------------------------------------ |
+| Storage           | Store embeddings + metadata          |
+| Similarity Search | Find vectors similar to query        |
+| Indexing          | Organize vectors for faster search   |
+| CRUD              | Create, Read, Update, Delete vectors |
+
+---
+
+🔍 **Indexing (Fast Search)**
+
+Without indexing:
+
+```
+Query → Compare with 10 lakh vectors → Slow
+```
+
+With clustering + indexing:
+
+```
+Query → Compare with clusters → Filter → Compare fewer vectors
+```
+
+Results: 10 lakh comparisons reduce to 1 lakh → Super fast 🚀
+
+---
+
+📍 **Where Are Vector Stores Used?**
+
+| Application            | Why                       |
+| ---------------------- | ------------------------- |
+| RAG systems            | Store document embeddings |
+| Recommendation systems | Find similar items        |
+| Semantic search        | Search by meaning         |
+| Image search           | Compare image embeddings  |
+
+Anywhere embeddings are used → **vector store is required**.
+
+---
+
+📌 **Vector Store vs Vector Database**
+
+| Vector Store        | Vector Database    |
+| ------------------- | ------------------ |
+| Only stores vectors | Full DB system     |
+| Lightweight         | Enterprise scaling |
+| Local experiments   | Production-ready   |
+
+Examples:
+
+* Vector Store → **FAISS**
+* Vector DB → **Pinecone, Milvus, Weaviate**
+* Hybrid → **Chroma**
+
+Formula:
+
+```
+Vector Database = Vector Store + Database Features
+```
+
+---
+
+🛠 **Vector Stores in LangChain**
+
+LangChain supports: **Chroma, FAISS, Pinecone, Weaviate, Qdrant**
+
+Common methods:
+
+```
+from_documents()
+add_documents()
+similarity_search()
+delete()
+update()
+```
+
+You can switch vector stores without changing most code.
+
+---
+
+🔥 **Chroma Vector Store**
+
+Chroma is:
+
+* Lightweight
+* Open Source
+* Ideal for Local RAG development
+
+Chroma hierarchy:
+
+```
+Tenant → Database → Collection → Documents
+```
+
+Each document has:
+
+* Embedding vector
+* Metadata (extra info)
+
+---
+
+🧾 **COMPLETE WORKING CODE** (Run in Colab)
+
+### STEP 1: Install libraries
+
+```
+!pip install langchain langchain-openai chromadb tiktoken
+```
+
+### STEP 2: Import modules
+
+```
+from langchain_openai import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.schema import Document
+```
+
+### STEP 3: Create Documents
+
+```
+doc1 = Document(page_content="Virat Kohli is an Indian cricketer and a great batsman.", metadata={"team": "Royal Challengers Bangalore"})
+
+doc2 = Document(page_content="Rohit Sharma is the captain of Mumbai Indians.", metadata={"team": "Mumbai Indians"})
+
+doc3 = Document(page_content="MS Dhoni is a former captain of Chennai Super Kings.", metadata={"team": "Chennai Super Kings"})
+
+doc4 = Document(page_content="Jasprit Bumrah is a bowler for Mumbai Indians.", metadata={"team": "Mumbai Indians"})
+
+doc5 = Document(page_content="Ravindra Jadeja is an all-rounder in Chennai Super Kings.", metadata={"team": "Chennai Super Kings"})
+
+docs = [doc1, doc2, doc3, doc4, doc5]
+```
+
+### STEP 4: Create Vector Store
+
+```
+embeddings = OpenAIEmbeddings()
+vector_store = Chroma(embedding_function=embeddings, persist_directory="my_chromadb", collection_name="sample")
+```
+
+### STEP 5: Add Documents
+
+```
+vector_store.add_documents(docs)
+```
+
+### STEP 6: View Data
+
+```
+vector_store.get(include=["embeddings", "documents", "metadatas"])
+```
+
+### STEP 7: Similarity Search
+
+```
+query = "Who among these is a bowler?"
+vector_store.similarity_search(query, k=2)
+```
+
+### STEP 8: Similarity Search with Score
+
+```
+vector_store.similarity_search_with_score(query, k=2)
+```
+
+### STEP 9: Filter by Metadata
+
+```
+vector_store.similarity_search(query="player", k=10, filter={"team": "Chennai Super Kings"})
+```
+
+### STEP 10: Update a Document
+
+```
+updated_doc = Document(page_content="Virat Kohli, former captain of RCB, is known for his aggressive leadership.", metadata={"team": "Royal Challengers Bangalore"})
+
+vector_store.update_document(document_id="1", document=updated_doc)
+```
+
+### STEP 11: Delete a Document
+
+```
+vector_store.delete(ids=["1"])
+```
+
+---
+
+🎉 **CONCLUSION**
+
+Now you understand:
+✔ Why vector stores exist
+✔ Why embeddings matter
+✔ Difference between vector store vs vector database
+✔ How LangChain integrates vector stores
+✔ How to use ChromaDB
+
+You are now one step away from building your own **RAG system** 🚀
+
+---
+
+⚡ **HOMEWORK**
+Try replacing Chroma with:
+
+```
+from langchain.vectorstores import FAISS
+```
+
+Same code will work — LangChain has a unified API.
+
