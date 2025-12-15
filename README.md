@@ -4112,3 +4112,426 @@ Techniques:
   * Private or recent data is needed
 
 🚀 **Next Step:** Build a complete **RAG system using LangChain**
+
+# 📘 Building a RAG System with LangChain Part 2 video second
+
+## YouTube Chat using RAG (Simple English Notes)
+
+---
+
+## 1. What is this video about?
+
+This video explains **how to build a practical RAG (Retrieval Augmented Generation) system using LangChain**.
+
+### In the previous video:
+
+* Learned **RAG theory**
+* Why RAG is needed
+* RAG vs Fine-tuning
+
+### In this video:
+
+* Build a **complete RAG system step-by-step**
+* Use **real code examples**
+* Solve a **real-world problem**
+
+---
+
+## 2. Problem Statement – YouTube Chat
+
+### ❓ Problem
+
+YouTube videos (podcasts, lectures) are very long (2–3 hours).
+If you want to:
+
+* Ask a question
+* Get a summary
+* Clear a doubt
+
+👉 You must watch the full video.
+
+### ✅ Solution
+
+Build a **RAG-based YouTube Chat System** where:
+
+* You give a YouTube video
+* Ask any question
+* System answers **using only that video’s content**
+
+### Examples:
+
+* “Is AI discussed in this podcast?”
+* “Summarize this video in 5 points”
+* “Explain this part of the lecture”
+
+---
+
+## 3. Possible UI Options (Not main focus)
+
+* Chrome Extension (HTML, CSS, JavaScript)
+* Streamlit Website
+* Google Colab Notebook (used in this video)
+
+📌 **Focus is on RAG logic, not UI**
+
+---
+
+## 4. RAG Architecture Used
+
+We follow the **standard RAG flow**:
+
+### 🔹 Step 1: Indexing
+
+* Load document (YouTube transcript)
+* Split text into chunks
+* Create embeddings
+* Store embeddings in vector store
+
+### 🔹 Step 2: Retrieval
+
+* Convert query to embedding
+* Perform semantic search
+* Fetch relevant chunks
+
+### 🔹 Step 3: Augmentation
+
+* Combine:
+
+  * Retrieved context
+  * User query
+* Create a prompt
+
+### 🔹 Step 4: Generation
+
+* Send prompt to LLM
+* Generate final answer
+
+---
+
+## 5. Requirements
+
+### 🔑 OpenAI API Key
+
+```python
+import os
+os.environ["OPENAI_API_KEY"] = "your_api_key_here"
+```
+
+---
+
+## 6. Install Required Libraries
+
+```bash
+pip install langchain langchain-community langchain-openai faiss-cpu youtube-transcript-api
+```
+
+---
+
+## 7. Step 1 – Load YouTube Transcript
+
+We use **YouTubeTranscriptApi** (more reliable than LangChain YouTubeLoader).
+
+### 🔹 Get Transcript Code
+
+```python
+from youtube_transcript_api import YouTubeTranscriptApi
+
+video_id = "VIDEO_ID_HERE"  # only ID, not full URL
+language = "en"  # use "hi" for Hindi videos
+
+transcript = YouTubeTranscriptApi.get_transcript(
+    video_id,
+    languages=[language]
+)
+```
+
+### 🔹 Transcript Format
+
+```python
+[
+  {'text': 'sentence', 'start': 12.3, 'duration': 4.5},
+  ...
+]
+```
+
+### 🔹 Convert Transcript into Single Text
+
+```python
+full_text = " ".join([item["text"] for item in transcript])
+```
+
+✔️ Now we have the **complete video transcript as one string**
+
+---
+
+## 8. Step 2 – Text Splitting
+
+Long text must be split into chunks.
+
+### 🔹 Recursive Character Text Splitter
+
+```python
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+
+chunks = text_splitter.split_text(full_text)
+
+len(chunks)  # example: 168 chunks
+```
+
+---
+
+## 9. Step 3 – Create Embeddings & Vector Store
+
+### 🔹 Embedding Model
+
+```python
+from langchain_openai import OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings()
+```
+
+### 🔹 FAISS Vector Store
+
+```python
+from langchain_community.vectorstores import FAISS
+
+vector_store = FAISS.from_texts(chunks, embeddings)
+```
+
+✔️ **Indexing complete**
+
+---
+
+## 10. Step 4 – Create Retriever
+
+Retriever fetches relevant chunks.
+
+```python
+retriever = vector_store.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 4}
+)
+```
+
+### 🔹 Test Retriever
+
+```python
+docs = retriever.invoke("What is DeepMind?")
+len(docs)
+```
+
+✔️ Output → List of relevant documents
+
+---
+
+## 11. Step 5 – Prompt Template (Augmentation)
+
+### 🔹 Prompt Template
+
+```python
+from langchain.prompts import PromptTemplate
+
+prompt = PromptTemplate(
+    template="""
+You are a helpful assistant.
+Answer ONLY from the provided transcript context.
+If the context is insufficient, say \"I don't know\".
+
+Context:
+{context}
+
+Question:
+{question}
+""",
+    input_variables=["context", "question"]
+)
+```
+
+---
+
+## 12. Convert Retrieved Docs to Context String
+
+```python
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+```
+
+---
+
+## 13. Step 6 – LLM Setup
+
+```python
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+```
+
+---
+
+## 14. Manual RAG (Before Chain)
+
+```python
+question = "Is the topic of aliens discussed in this video?"
+
+docs = retriever.invoke(question)
+context = format_docs(docs)
+
+final_prompt = prompt.invoke({
+    "context": context,
+    "question": question
+})
+
+response = llm.invoke(final_prompt)
+response.content
+```
+
+✔️ **RAG pipeline works**
+
+---
+
+## 15. Problem: Too Many Manual Steps ❌
+
+We manually called:
+
+* Retriever
+* Prompt
+* LLM
+
+❌ Not scalable
+❌ Not clean
+
+---
+
+## 16. Solution – Build LangChain Chain ✅
+
+---
+
+## 17. Parallel Chain (Context + Question)
+
+### 🔹 Required Imports
+
+```python
+from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+```
+
+### 🔹 Parallel Chain
+
+```python
+parallel_chain = RunnableParallel({
+    "context": retriever | RunnableLambda(format_docs),
+    "question": RunnablePassthrough()
+})
+```
+
+### 🔹 Test Parallel Chain
+
+```python
+parallel_chain.invoke("Who is Demis?")
+```
+
+Output:
+
+```python
+{
+  "context": "...large text...",
+  "question": "Who is Demis?"
+}
+```
+
+---
+
+## 18. Final RAG Chain
+
+```python
+from langchain_core.output_parsers import StrOutputParser
+
+rag_chain = (
+    parallel_chain
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+```
+
+### 🔹 Single Call Execution
+
+```python
+rag_chain.invoke("Can you summarize the video?")
+```
+
+✔️ **One function → Full RAG pipeline**
+
+---
+
+## 19. Final Result
+
+✅ Indexing
+✅ Retrieval
+✅ Augmentation
+✅ Generation
+✅ Clean & scalable code
+
+---
+
+## 20. Possible Improvements (Industry-Level)
+
+### 🔹 UI Improvements
+
+* Streamlit Website
+* Chrome Extension
+
+### 🔹 Evaluation
+
+* RAGAS
+* LangSmith
+
+**Metrics:**
+
+* Faithfulness
+* Answer relevance
+* Context recall
+* Context precision
+
+### 🔹 Indexing Improvements
+
+* Fix transcript errors
+* Translate non-English transcripts
+* Semantic chunking
+* Pinecone / cloud vector databases
+
+### 🔹 Retrieval Improvements
+
+* Query rewriting
+* Multi-query retrieval
+* Hybrid search
+* MMR
+* Re-ranking
+* Contextual compression
+
+### 🔹 Augmentation Improvements
+
+* Better prompt templates
+* Answer grounding
+* Context window optimization
+
+### 🔹 Generation Improvements
+
+* Citations
+* Guardrails
+* Safety filters
+
+### 🔹 Advanced RAG
+
+* Multimodal RAG (text + image + video)
+* Agentic RAG
+* Memory-based RAG
+
+---
+
+🚀 **This README covers a complete beginner-to-intermediate RAG system using LangChain.**
+
