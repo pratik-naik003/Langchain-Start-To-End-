@@ -3682,14 +3682,433 @@ Because:
 
 ---
 
-✅ You can use this document as:
 
-* README.md
-* Exam notes
-* RAG revision notes
+# 📘 RAG (Retrieval Augmented Generation) 
 
 ---
 
-🔥 Next Step:
-Learn **full RAG pipeline with Chains + Retrievers + LLMs**
+## 1. What is this video about?
 
+This video introduces **RAG (Retrieval Augmented Generation)**.
+
+* RAG is one of the most useful and common applications of Generative AI.
+* It is widely used to build **question-answering systems on private or recent data**.
+
+**Instructor’s plan:**
+
+* **This video** → Conceptual and theoretical understanding of RAG
+* **Next video** → Build a complete RAG system using **LangChain**
+
+---
+
+## 2. Quick Recap: RAG Components (Already Covered)
+
+Before learning RAG, the following core components were studied:
+
+### 1️⃣ Document Loaders
+
+* Load data from different sources:
+
+  * PDFs
+  * Websites
+  * YouTube
+  * Google Drive
+  * AWS S3
+
+### 2️⃣ Text Splitters
+
+* Break large text into smaller, meaningful chunks
+
+### 3️⃣ Vector Stores
+
+* Store text in the form of **embeddings (vectors)**
+
+### 4️⃣ Retrievers
+
+* Perform **semantic search** to fetch relevant chunks from vector stores
+
+Once these components are clear, understanding RAG becomes easy.
+
+---
+
+## 3. How we will understand RAG
+
+We follow the **WHY → WHAT → HOW** approach:
+
+* **Why** do we need RAG?
+* **What** exactly is RAG?
+* **How** does a RAG-based system work?
+
+---
+
+## 4. Understanding LLMs (Background)
+
+### What are LLMs?
+
+* LLMs (Large Language Models) are **transformer-based neural networks**.
+* They have **billions of parameters** (weights and biases).
+
+Examples:
+
+* 7B, 13B, 70B, 175B parameter models
+
+### Parametric Knowledge
+
+* All knowledge of an LLM is stored inside its **parameters**.
+* This is called **parametric knowledge**.
+* More parameters → more knowledge → more powerful model
+
+### How users interact with LLMs
+
+1. User sends a **prompt**
+2. LLM:
+
+   * Understands the prompt
+   * Searches its parametric knowledge
+   * Generates an answer word by word
+
+---
+
+## 5. Problems with Normal Prompting (WHY RAG is needed)
+
+### ❌ Problem 1: Private Data
+
+* LLMs are **not trained on your private data**
+
+Examples:
+
+* Company documents
+* Internal videos
+
+Asking ChatGPT about them → ❌ No answer
+
+---
+
+### ❌ Problem 2: Recent / Current Data
+
+* LLMs have a **knowledge cutoff date**
+* They do not know:
+
+  * Today’s news
+  * Latest updates
+
+Open-source models fail more in this case.
+
+---
+
+### ❌ Problem 3: Hallucination
+
+* LLMs sometimes give **confident but incorrect answers**
+
+Example:
+
+> “Einstein played football for Germany” ❌
+
+This happens because LLMs are **probabilistic models**.
+
+---
+
+## 6. First Solution Attempt: Fine-Tuning
+
+### What is Fine-Tuning?
+
+* Take a **pretrained LLM**
+* Train it again on a **smaller domain-specific dataset**
+
+**Example:**
+
+* Train LLM on medical data → Better medical answers
+
+---
+
+### Types of Fine-Tuning
+
+#### 1️⃣ Supervised Fine-Tuning
+
+* Uses **labeled data**
+* Format:
+
+  * Prompt → Desired Output
+* Requires thousands to lakhs of examples
+
+#### 2️⃣ Continued Pre-Training
+
+* Unsupervised method
+* Feed raw text (e.g., lecture transcripts)
+* Similar to original pretraining but on smaller domain data
+
+#### 3️⃣ RLHF
+
+* Reinforcement Learning with Human Feedback
+* Helps align model behavior with human expectations
+
+---
+
+### Fine-Tuning Process (Supervised)
+
+1. Collect labeled domain data
+2. Choose method (Full FT / LoRA / QLoRA)
+3. Train for a few epochs
+4. Evaluate (accuracy, hallucination, safety)
+
+---
+
+## 7. Problems with Fine-Tuning ❌
+
+* **Very expensive** (large models need heavy compute)
+* **Requires expert engineers**
+* **Frequent updates are costly**
+
+  * New data → retrain again
+  * Remove data → retrain again
+
+👉 Fine-tuning is **not practical** when data changes frequently.
+
+---
+
+## 8. Second Solution: In-Context Learning
+
+### What is In-Context Learning?
+
+* LLM learns a task by seeing **examples inside the prompt**
+* **No weight updates** happen
+* Core ability of large models like GPT-3+
+
+### Example: Sentiment Analysis
+
+```
+I love this phone → Positive
+This app crashes → Negative
+Camera is amazing → Positive
+I hate the battery life → ?
+```
+
+**LLM Answer:** Negative
+
+This is called **Few-shot Prompting**.
+
+---
+
+## 9. Emergent Property of LLMs
+
+* In-context learning was **not explicitly programmed**
+* It appeared when models became very large
+
+Examples:
+
+* GPT-1 / GPT-2 → ❌
+* GPT-3 (175B) → ✅
+
+📄 Famous paper:
+**“Language Models are Few-Shot Learners”**
+
+---
+
+## 10. Improving In-Context Learning → RAG
+
+### Key Idea
+
+* Instead of giving **examples**, give **relevant context**
+
+---
+
+## 11. What is RAG?
+
+**RAG = Retrieval Augmented Generation**
+
+> RAG makes an LLM smarter by giving it **extra information at question time**.
+
+---
+
+## 12. RAG Example (Intuition)
+
+* Website has a **2-hour lecture video**
+* Student asks a question about **Gradient Descent**
+
+Instead of:
+
+* Sending entire transcript ❌
+
+We:
+
+* Retrieve only relevant parts (e.g. 5–25 minutes)
+* Send those parts as **context**
+
+---
+
+## 13. RAG Prompt Example
+
+```
+You are a helpful assistant.
+Answer only from the provided context.
+If context is insufficient, say "I don't know".
+```
+
+---
+
+## 14. RAG = 4-Step Pipeline
+
+### Step 1: Indexing
+
+Create an **external knowledge base**
+
+Includes:
+
+* Document Ingestion
+* Text Chunking
+* Embedding Generation
+* Vector Storage
+
+---
+
+### Step 2: Retrieval
+
+* Convert user query into embedding
+* Search vector store
+* Fetch most relevant chunks
+
+---
+
+### Step 3: Augmentation
+
+* Combine:
+
+  * User query
+  * Retrieved context
+* Create final prompt
+
+---
+
+### Step 4: Generation
+
+* LLM generates answer using:
+
+  * Parametric knowledge
+  * Retrieved context
+
+---
+
+## 15. Indexing in Detail
+
+### 1️⃣ Document Ingestion
+
+* Load documents into memory
+
+Tools:
+
+* PDF Loader
+* YouTube Loader
+* Web Loader
+* Google Drive / S3
+
+---
+
+### 2️⃣ Text Chunking
+
+**Why split text?**
+
+* LLM context length limit
+* Better semantic search
+
+**Rules:**
+
+* Chunks must be meaningful
+* Avoid abrupt splits
+
+**Tools:**
+
+* RecursiveCharacterTextSplitter
+* Semantic Chunker
+* HTML / Markdown splitters
+
+---
+
+### 3️⃣ Embeddings
+
+* Convert each chunk → dense vector
+* Captures semantic meaning
+* Required for semantic search
+
+Models:
+
+* OpenAI Embeddings
+* Sentence Transformers
+
+---
+
+### 4️⃣ Vector Store
+
+Store:
+
+* Text chunk
+* Embedding
+* Metadata
+
+Examples:
+
+* **Local:** FAISS, Chroma
+* **Cloud:** Pinecone, Weaviate, Milvus, Qdrant
+
+👉 This becomes your **external knowledge base**
+
+---
+
+## 16. Retrieval in Detail
+
+Steps:
+
+1. Convert query to embedding
+2. Find closest vectors
+3. Rank results
+4. Select top chunks as context
+
+Techniques:
+
+* Cosine similarity
+* MMR
+* Contextual compression
+* Re-ranking
+
+---
+
+## 17. Why RAG Solves the 3 Problems
+
+### ✅ Private Data
+
+* Context comes from your own data
+* LLM answers from your documents
+
+### ✅ Recent Data
+
+* Add new documents to vector store
+* No retraining required
+
+### ✅ Hallucination
+
+* LLM answers only from provided context
+* Can say “I don’t know”
+* Responses become grounded
+
+---
+
+## 18. RAG vs Fine-Tuning
+
+| Feature               | RAG          | Fine-Tuning |
+| --------------------- | ------------ | ----------- |
+| Cost                  | Low          | Very High   |
+| Retraining            | ❌ Not needed | ✅ Required  |
+| Updates               | Easy         | Expensive   |
+| Complexity            | Simple       | Complex     |
+| Hallucination Control | Better       | Limited     |
+
+---
+
+## 19. Final Takeaway
+
+* RAG is a **cheaper, simpler, and scalable** alternative to fine-tuning.
+* Best choice when:
+
+  * Data changes frequently
+  * Private or recent data is needed
+
+🚀 **Next Step:** Build a complete **RAG system using LangChain**
