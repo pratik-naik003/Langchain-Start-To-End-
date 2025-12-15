@@ -3246,3 +3246,450 @@ from langchain.vectorstores import FAISS
 
 Same code will work — LangChain has a unified API.
 
+# 🚀 LangChain Retrievers 
+
+These notes explain **Retrievers in LangChain** in very simple English, step by step, with **clear concepts + code snippets**. This is mainly used in **RAG (Retrieval Augmented Generation)** systems.
+
+---
+
+## 1️⃣ Where Retrievers Fit in RAG (Big Picture)
+
+To build a **RAG-based application**, you must understand these 4 core components:
+
+1. **Document Loaders** – Load data (PDFs, web pages, text files)
+2. **Text Splitters** – Break large text into small chunks
+3. **Vector Stores** – Store embeddings of text
+4. **Retrievers** – Fetch the most relevant documents for a query ✅
+
+➡️ After learning these four, you are ready to build RAG systems.
+
+---
+
+## 2️⃣ What is a Retriever?
+
+**Simple definition:**
+
+> A Retriever is a LangChain component that **fetches relevant documents from a data source** based on a user’s query.
+
+### How it works (Simple Flow)
+
+```
+User Query → Retriever → Data Source → Relevant Documents
+```
+
+* User asks a question
+* Retriever searches a data source (vector store, Wikipedia, API, etc.)
+* Retriever returns **multiple LangChain `Document` objects**
+
+📌 Think of a Retriever like a **smart search engine**.
+
+---
+
+## 3️⃣ Important Points About Retrievers
+
+### 🔹 Point 1: Multiple Retrievers Exist
+
+LangChain does NOT have only one retriever.
+
+There are **many retrievers**, each designed for different use cases.
+
+---
+
+### 🔹 Point 2: Retrievers Are Runnables
+
+All retrievers are **Runnables**, just like:
+
+* Models
+* Prompts
+* Chains
+
+This means:
+
+* You can call `.invoke()` on them
+* You can plug them inside **chains**
+
+```python
+results = retriever.invoke("your query here")
+```
+
+---
+
+### 🔹 Point 3: Why Retrievers Matter
+
+In advanced RAG systems:
+
+* Different retrievers are used
+* Search strategies matter a lot
+* Retriever choice improves accuracy
+
+---
+
+## 4️⃣ Types of Retrievers (Two Ways to Classify)
+
+### ✅ Type 1: Based on **Data Source**
+
+Examples:
+
+* Wikipedia Retriever → Wikipedia articles
+* Vector Store Retriever → Chroma, FAISS, etc.
+* Arxiv Retriever → Research papers
+
+---
+
+### ✅ Type 2: Based on **Search Strategy**
+
+Examples:
+
+* Similarity Search
+* MMR (Maximum Marginal Relevance)
+* Multi-Query Retriever
+* Contextual Compression Retriever
+
+---
+
+## 5️⃣ Wikipedia Retriever
+
+### What is it?
+
+A retriever that searches **Wikipedia** using Wikipedia APIs.
+
+* Uses **keyword-based search** (not semantic search)
+* Returns relevant Wikipedia articles as `Document` objects
+
+---
+
+### Code Example: Wikipedia Retriever
+
+```python
+from langchain_community.retrievers import WikipediaRetriever
+
+# Create retriever
+retriever = WikipediaRetriever(
+    top_k_results=2,
+    lang="en"
+)
+
+query = "Geopolitical history of India and Pakistan"
+
+# Invoke retriever
+docs = retriever.invoke(query)
+
+# Print results
+for doc in docs:
+    print(doc.page_content[:500])
+```
+
+📌 This is a **retriever**, not a document loader, because it performs **search + relevance filtering**.
+
+---
+
+## 6️⃣ Vector Store Retriever (Most Common)
+
+### What is it?
+
+A retriever that fetches documents from a **vector store** using **semantic similarity**.
+
+Used with:
+
+* Chroma
+* FAISS
+* Weaviate
+
+---
+
+### How It Works
+
+1. Documents → Embeddings
+2. Store embeddings in vector DB
+3. User query → Query embedding
+4. Semantic similarity search
+5. Return top-k documents
+
+---
+
+### Code Example: Vector Store Retriever (Chroma)
+
+```python
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain.schema import Document
+
+# Sample documents
+docs = [
+    Document(page_content="LangChain is a framework for LLM apps"),
+    Document(page_content="Chroma is a vector database"),
+]
+
+embeddings = OpenAIEmbeddings()
+
+vectorstore = Chroma.from_documents(docs, embeddings)
+
+retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
+
+query = "What is Chroma used for?"
+results = retriever.invoke(query)
+
+for r in results:
+    print(r.page_content)
+```
+
+---
+
+### ❓ Why Use Retriever Instead of `similarity_search()`?
+
+You can do this:
+
+```python
+vectorstore.similarity_search(query, k=2)
+```
+
+But retrievers are better because:
+
+* They support **advanced strategies (MMR, Multi-query)**
+* They are **runnables**
+* They integrate easily into **RAG chains**
+
+---
+
+## 7️⃣ MMR – Maximum Marginal Relevance
+
+### Problem with Normal Similarity Search
+
+* Returns **very similar documents**
+* Causes **redundant results**
+
+Example:
+
+* Doc 1: Glaciers melting
+* Doc 2: Glaciers melting again
+* Doc 3: Deforestation
+
+➡️ Poor diversity
+
+---
+
+### What MMR Solves
+
+MMR selects documents that are:
+
+✔ Relevant to the query
+✔ Different from each other
+
+> Relevant + Diverse
+
+---
+
+### MMR Formula Idea (Conceptual)
+
+* Pick most relevant document first
+* Then pick documents that are **less similar** to already selected ones
+
+---
+
+### Code Example: MMR Retriever
+
+```python
+retriever = vectorstore.as_retriever(
+    search_type="mmr",
+    search_kwargs={
+        "k": 3,
+        "lambda_mult": 0.5
+    }
+)
+
+query = "What is LangChain?"
+results = retriever.invoke(query)
+
+for r in results:
+    print(r.page_content)
+```
+
+📌 `lambda_mult`:
+
+* `1.0` → behaves like similarity search
+* `0.0` → maximum diversity
+
+---
+
+## 8️⃣ Multi-Query Retriever
+
+### Problem It Solves
+
+User queries can be **ambiguous**.
+
+Example:
+
+> "How can I stay healthy?"
+
+Meaning could be:
+
+* Diet
+* Exercise
+* Mental health
+
+---
+
+### Solution: Multi-Query Retriever
+
+* Uses an **LLM** to generate multiple sub-queries
+* Searches each sub-query
+* Merges results
+* Removes duplicates
+
+---
+
+### Flow
+
+```
+User Query
+   ↓
+LLM generates multiple queries
+   ↓
+Retriever searches for each
+   ↓
+Results merged & deduplicated
+```
+
+---
+
+### Code Example: Multi-Query Retriever
+
+```python
+from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI()
+
+base_retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+
+multi_retriever = MultiQueryRetriever.from_llm(
+    retriever=base_retriever,
+    llm=llm
+)
+
+query = "How to improve energy levels and maintain balance"
+results = multi_retriever.invoke(query)
+
+for r in results:
+    print(r.page_content)
+```
+
+📌 Best for **ambiguous or broad queries**.
+
+---
+
+## 9️⃣ Contextual Compression Retriever
+
+### Problem It Solves
+
+Documents may contain **mixed topics**.
+
+Example document:
+
+* Line 1: Grand Canyon
+* Line 2: Photosynthesis
+* Line 3: Tourism
+
+Query:
+
+> "What is photosynthesis?"
+
+❌ Normal retriever returns full document
+
+---
+
+### Solution
+
+* Retrieve documents first
+* Then **compress documents using an LLM**
+* Keep only query-relevant parts
+
+---
+
+### How It Works
+
+1. Base retriever fetches documents
+2. LLM removes irrelevant text
+3. Short, clean output returned
+
+---
+
+### Code Example: Contextual Compression Retriever
+
+```python
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI()
+
+base_retriever = vectorstore.as_retriever()
+compressor = LLMChainExtractor.from_llm(llm)
+
+compression_retriever = ContextualCompressionRetriever(
+    base_retriever=base_retriever,
+    document_compressor=compressor
+)
+
+query = "What is photosynthesis?"
+results = compression_retriever.invoke(query)
+
+for r in results:
+    print(r.page_content)
+```
+
+📌 Best for:
+
+* Long documents
+* Mixed content
+* Reducing LLM context length
+
+---
+
+## 🔟 Other Important Retrievers (Explore Later)
+
+* Parent Document Retriever
+* Time-Weighted Vector Retriever
+* Self-Query Retriever
+* Ensemble Retriever
+* Multi-Retriever
+
+📌 Official Docs:
+[https://python.langchain.com/docs/modules/data_connection/retrievers/](https://python.langchain.com/docs/modules/data_connection/retrievers/)
+
+---
+
+## ✅ Why So Many Retrievers Exist?
+
+Because:
+
+* Simple RAG often gives poor results
+* Different problems need different strategies
+* Retriever tuning improves RAG accuracy
+
+➡️ Advanced RAG = Better Retrievers
+
+---
+
+## 🧠 Final Summary
+
+* Retrievers fetch relevant documents
+* They are **runnable components**
+* Multiple retrievers exist for different needs
+* Advanced retrievers = better RAG systems
+
+📌 In real projects, you will **experiment with retrievers** to improve performance.
+
+---
+
+✅ You can use this document as:
+
+* README.md
+* Exam notes
+* RAG revision notes
+
+---
+
+🔥 Next Step:
+Learn **full RAG pipeline with Chains + Retrievers + LLMs**
+
