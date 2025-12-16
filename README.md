@@ -4857,4 +4857,360 @@ tools = math_toolkit.get_tools()
 
 > If you want to build real-world AI agents, mastering **tools** is non-negotiable.
 
+# 📘 LangChain Tool Calling – Simple English Notes
+
+These notes explain **Tools, Tool Binding, Tool Calling, and Tool Execution** in LangChain, step‑by‑step, in **simple English**, with **important code snippets**.
+
+---
+
+## 1️⃣ Quick Revision: What LLMs Can and Cannot Do
+
+### What LLMs are good at
+
+* **Reasoning** → understanding a question by breaking it down
+* **Text generation** → producing a human‑like answer
+
+Think of an LLM as:
+
+> 🧠 Good at thinking + 🗣️ good at speaking
+
+### Biggest limitation of LLMs
+
+LLMs **cannot perform actions** on their own:
+
+* ❌ Cannot call APIs
+* ❌ Cannot update databases
+* ❌ Cannot run commands
+* ❌ Cannot fetch real‑time data
+
+They **only generate text**.
+
+👉 To give LLMs *hands and legs*, we use **Tools**.
+
+---
+
+## 2️⃣ What Are Tools in LangChain?
+
+* Tools are **Python functions**
+* Each tool performs **one task**
+* LLMs can *suggest* using a tool
+
+### Every tool must have:
+
+1. **Name**
+2. **Description** (what the tool does)
+3. **Input schema** (what inputs it expects)
+
+---
+
+## 3️⃣ Tool Creation (Example: Multiply Tool)
+
+```python
+from langchain_core.tools import tool
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """
+    Given two numbers a and b, this tool returns their product.
+    """
+    return a * b
+```
+
+### Testing the tool
+
+```python
+multiply.invoke({"a": 3, "b": 4})
+# Output: 12
+```
+
+---
+
+## 4️⃣ Tool Binding (Connecting Tool with LLM)
+
+### What is Tool Binding?
+
+Tool Binding means **registering tools with an LLM** so that:
+
+* LLM knows which tools exist
+* LLM knows what each tool does
+* LLM knows how to call them
+
+### Create an LLM
+
+```python
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI()
+```
+
+### Bind tools
+
+```python
+llm_with_tools = llm.bind_tools([multiply])
+```
+
+Now:
+
+* `llm_with_tools` = LLM + tools
+
+---
+
+## 5️⃣ Tool Calling (LLM Suggests a Tool)
+
+### Important concept
+
+⚠️ **LLM does NOT run tools**
+
+LLM only:
+
+* Decides *which tool* is needed
+* Generates *tool name + input arguments*
+
+Actual execution is done by **you (the developer)**.
+
+---
+
+### Example 1: Normal Question
+
+```python
+llm_with_tools.invoke("Hi, how are you?")
+```
+
+✅ LLM replies normally
+❌ No tool is used
+
+---
+
+### Example 2: Tool‑Required Question
+
+```python
+ai_msg = llm_with_tools.invoke("Can you multiply 3 with 10?")
+```
+
+### Tool Call Output
+
+```python
+ai_msg.tool_calls
+```
+
+Example output:
+
+```json
+[
+  {
+    "name": "multiply",
+    "args": {"a": 3, "b": 10},
+    "id": "tool_call_id",
+    "type": "tool_call"
+  }
+]
+```
+
+👉 This is called **Tool Calling**.
+
+---
+
+## 6️⃣ Tool Execution (Running the Tool)
+
+Now we **execute the tool manually**.
+
+### Extract arguments and run tool
+
+```python
+tool_call = ai_msg.tool_calls[0]
+result = multiply.invoke(tool_call)
+```
+
+### Tool Message
+
+* Result is wrapped inside a **ToolMessage**
+* This message can be sent back to the LLM
+
+---
+
+## 7️⃣ Maintaining Conversation History
+
+LangChain works best with **message history**.
+
+### Message types
+
+* `HumanMessage`
+* `AIMessage`
+* `ToolMessage`
+
+### Example flow
+
+```python
+from langchain_core.messages import HumanMessage
+
+messages = []
+messages.append(HumanMessage(content="Multiply 3 and 10"))
+
+ai_msg = llm_with_tools.invoke(messages)
+messages.append(ai_msg)
+
+# Execute tool
+result = multiply.invoke(ai_msg.tool_calls[0])
+messages.append(result)
+
+# Send full context back to LLM
+final_answer = llm.invoke(messages)
+print(final_answer.content)
+```
+
+Output:
+
+```
+The product of 3 and 10 is 30.
+```
+
+---
+
+## 8️⃣ Real‑World Example: Currency Converter
+
+### Problem
+
+LLMs **do not have real‑time currency rates**.
+
+So we create tools:
+
+1. Fetch conversion rate from API
+2. Multiply amount with rate
+
+---
+
+## 9️⃣ Tool 1: Get Conversion Factor
+
+```python
+import requests
+from langchain_core.tools import tool
+
+@tool
+def get_conversion_factor(base_currency: str, target_currency: str) -> float:
+    """
+    Fetches real‑time currency conversion rate between two currencies.
+    """
+    url = f"https://api.exchangerate-api.com/v4/latest/{base_currency}"
+    response = requests.get(url)
+    data = response.json()
+    return data["rates"][target_currency]
+```
+
+---
+
+## 🔟 Tool 2: Convert Currency
+
+```python
+from langchain_core.tools import tool
+
+@tool
+def convert(amount: int, conversion_rate: float) -> float:
+    """
+    Converts base currency amount into target currency.
+    """
+    return amount * conversion_rate
+```
+
+---
+
+## 1️⃣1️⃣ Injected Tool Arguments (Very Important)
+
+### Problem
+
+LLM may **hallucinate conversion rate** before tool execution.
+
+### Solution
+
+Use **InjectedToolArgument**
+
+```python
+from typing_extensions import Annotated
+from langchain_core.tools import InjectedToolArgument
+
+@tool
+def convert(
+    amount: int,
+    conversion_rate: Annotated[float, InjectedToolArgument()]
+) -> float:
+    return amount * conversion_rate
+```
+
+Now:
+
+* LLM will NOT fill `conversion_rate`
+* Developer injects it manually after first tool execution
+
+---
+
+## 1️⃣2️⃣ Executing Multiple Tools in Order
+
+```python
+messages = [HumanMessage(content="Convert 10 USD to INR")]
+ai_msg = llm_with_tools.invoke(messages)
+messages.append(ai_msg)
+
+conversion_rate = None
+
+for tool_call in ai_msg.tool_calls:
+    if tool_call["name"] == "get_conversion_factor":
+        tool_msg = get_conversion_factor.invoke(tool_call)
+        messages.append(tool_msg)
+        conversion_rate = tool_msg.content
+
+    if tool_call["name"] == "convert":
+        tool_call["args"]["conversion_rate"] = conversion_rate
+        tool_msg = convert.invoke(tool_call)
+        messages.append(tool_msg)
+
+final_answer = llm.invoke(messages)
+print(final_answer.content)
+```
+
+---
+
+## 1️⃣3️⃣ Is This an AI Agent?
+
+❌ **No**
+
+### Why?
+
+Because:
+
+* Developer controls execution
+* Steps are manually coded
+* LLM is not autonomous
+
+---
+
+## 1️⃣4️⃣ What Makes an AI Agent?
+
+An AI Agent:
+
+* Breaks problem into steps
+* Chooses tools automatically
+* Executes tools autonomously
+* Needs minimal human control
+
+👉 **This will be covered in the next video**.
+
+---
+
+## ✅ Final Summary
+
+You learned:
+
+* ✔️ Tool Creation
+* ✔️ Tool Binding
+* ✔️ Tool Calling
+* ✔️ Tool Execution
+* ✔️ Injected Tool Arguments
+* ✔️ Real‑time API usage
+
+🎯 This is the **foundation of AI Agents in LangChain**.
+
+---
+
+🚀 *Next step: Building a fully autonomous AI Agent*
+
+
 
