@@ -4532,6 +4532,329 @@ rag_chain.invoke("Can you summarize the video?")
 * Memory-based RAG
 
 ---
+# 📘 LangChain Tools & Agents – Simple English Notes
 
-🚀 **This README covers a complete beginner-to-intermediate RAG system using LangChain.**
+## 1. Playlist Recap
+
+This LangChain playlist is divided into **3 parts**:
+
+### Part 1 – LangChain Fundamentals
+
+* Models
+* Prompts
+* Chains
+* Other core components
+
+### Part 2 – RAG (Retrieval Augmented Generation)
+
+* Document Loaders
+* Text Splitters
+* Vector Stores
+* Retrievers
+* Built complete RAG-based systems
+
+### Part 3 – Agents (Current Section)
+
+* Tools (this video)
+* Tool Calling (next video)
+* Agents using LangChain & LangGraph
+
+👉 To build **agents**, understanding **tools** is mandatory.
+
+---
+
+## 2. What is a Tool?
+
+### Understanding LLM Limitations
+
+LLMs have **only two core abilities**:
+
+1. **Think (Reasoning)** – understand and break down questions
+2. **Speak (Text Generation)** – generate answers in natural language
+
+❌ LLMs **cannot**:
+
+* Book tickets
+* Call APIs
+* Fetch live data
+* Reliably solve complex math
+* Run code
+* Access databases
+
+👉 LLMs are like a **human brain without hands and legs**.
+
+---
+
+## 3. Why Tools are Needed
+
+### Definition
+
+> **A Tool is a function that gives LLMs hands and legs**.
+
+Tools allow LLMs to:
+
+* Perform actions
+* Call APIs
+* Run code
+* Interact with systems
+
+### Simple Definition
+
+> **A tool is just a Python function packaged so that an LLM can understand and call it when needed.**
+
+---
+
+## 4. Tools + LLM = Agents
+
+### Agent Definition
+
+> An AI Agent is an LLM-powered system that can **think, decide, and take actions using external tools and APIs**.
+
+### Breakdown
+
+* **Reasoning & Decision Making** → LLM
+* **Taking Action** → Tools
+
+👉 LLM + Tools = **Agent**
+
+---
+
+## 5. Types of Tools in LangChain
+
+### 1️⃣ Built-in Tools
+
+Pre-built, production-ready tools provided by LangChain.
+
+Examples:
+
+* DuckDuckGo Search
+* Wikipedia Query
+* Python REPL
+* Shell Tool
+* HTTP Requests
+* Gmail, Slack, SQL tools
+
+You just **import and use** them.
+
+---
+
+### 2️⃣ Custom Tools
+
+You create them when:
+
+* Built-in tools don’t match your use case
+* You want to call your own APIs
+* You want LLMs to interact with your database or app logic
+
+---
+
+## 6. Using Built-in Tools
+
+### Example: DuckDuckGo Search Tool
+
+```python
+from langchain_community.tools import DuckDuckGoSearchRun
+
+search_tool = DuckDuckGoSearchRun()
+
+result = search_tool.invoke("IPL news")
+print(result)
+```
+
+✅ Useful for:
+
+* Live news
+* Current events
+* Web search for agents
+
+---
+
+### Example: Shell Tool
+
+```python
+from langchain_community.tools import ShellTool
+
+shell = ShellTool()
+
+result = shell.invoke("whoami")
+print(result)
+```
+
+⚠️ **Warning**: Shell tool is powerful but risky in production.
+
+---
+
+## 7. Creating Custom Tools (3 Ways)
+
+### Method 1️⃣: Using `@tool` Decorator (Most Common)
+
+#### Step-by-step
+
+1. Write a Python function
+2. Add docstring (important)
+3. Add type hints
+4. Add `@tool` decorator
+
+```python
+from langchain_core.tools import tool
+
+@tool
+def multiply(a: int, b: int) -> int:
+    """Multiply two numbers"""
+    return a * b
+```
+
+#### Using the Tool
+
+```python
+result = multiply.invoke({"a": 3, "b": 5})
+print(result)  # 15
+```
+
+---
+
+### Tool Attributes
+
+```python
+print(multiply.name)
+print(multiply.description)
+print(multiply.args)
+```
+
+Every tool has:
+
+* `name`
+* `description`
+* `arguments`
+
+---
+
+### Tool Schema (What LLM Sees)
+
+LLM does NOT see your function code.
+It sees a **JSON schema** like this:
+
+```json
+{
+  "name": "multiply",
+  "description": "Multiply two numbers",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "a": {"type": "integer"},
+      "b": {"type": "integer"}
+    },
+    "required": ["a", "b"]
+  }
+}
+```
+
+---
+
+## 8. Method 2️⃣: StructuredTool + Pydantic (Strict Validation)
+
+Used for **production-grade agents**.
+
+```python
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel, Field
+
+class MultiplyInput(BaseModel):
+    a: int = Field(description="First number")
+    b: int = Field(description="Second number")
+
+def multiply(a: int, b: int) -> int:
+    return a * b
+
+multiply_tool = StructuredTool.from_function(
+    func=multiply,
+    name="multiply",
+    description="Multiply two numbers",
+    args_schema=MultiplyInput
+)
+```
+
+✔️ Enforces strict input schema
+
+---
+
+## 9. Method 3️⃣: BaseTool Class (Advanced)
+
+Best for:
+
+* Async tools
+* Deep customization
+
+```python
+from langchain_core.tools import BaseTool
+from pydantic import BaseModel
+
+class MultiplyInput(BaseModel):
+    a: int
+    b: int
+
+class MultiplyTool(BaseTool):
+    name = "multiply"
+    description = "Multiply two numbers"
+    args_schema = MultiplyInput
+
+    def _run(self, a: int, b: int) -> int:
+        return a * b
+```
+
+```python
+tool = MultiplyTool()
+print(tool.invoke({"a": 4, "b": 6}))  # 24
+```
+
+---
+
+## 10. Toolkits
+
+### What is a Toolkit?
+
+> A **Toolkit** is a collection of related tools bundled together.
+
+### Benefits
+
+* Reusability
+* Clean organization
+* Easy integration
+
+---
+
+### Example: Math Toolkit
+
+```python
+class MathToolkit:
+    def get_tools(self):
+        return [add, multiply]
+
+math_toolkit = MathToolkit()
+tools = math_toolkit.get_tools()
+```
+
+---
+
+## 11. Summary
+
+✔️ Tools give LLMs **action power**
+✔️ Built-in tools are ready-to-use
+✔️ Custom tools let LLMs interact with your systems
+✔️ Tools + LLM = Agents
+✔️ Toolkits group related tools
+
+---
+
+## 12. What’s Next?
+
+➡️ **Next Video**: Tool Calling (connecting tools with LLMs)
+➡️ After that: Full **Agents** using LangChain & LangGraph
+
+---
+
+🎯 **Key Takeaway**:
+
+> If you want to build real-world AI agents, mastering **tools** is non-negotiable.
+
 
